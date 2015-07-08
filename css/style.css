@@ -6,6 +6,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-around;
+    padding: 20px 0;
 }
 
 .music-item {
@@ -17,4 +18,9 @@
 .track-artist {
     font-weight: 700;
     display: block;
+}
+
+#top-controls {
+    overflow: hidden;
+    padding: 20px 20px 0 20px;
 }

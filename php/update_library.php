@@ -27,6 +27,9 @@ function rsearch($folder, $pattern) {
     return $fileList;
 }
 
+//Track execution time
+$time_pre = microtime(true);
+
 //Truncate existing library
 $query = $db->query("TRUNCATE table track_library");
 
@@ -130,8 +133,14 @@ foreach($foundTracks as $file) {
         $stmt->bind_param('ssssss', $title, $album, $artist, $duration, $md5, $file);
         $stmt->execute();
         $stmt->close();
-        $db->close();
         echo "Added track: " . $artist . " - " . $album . " - " . $title . "<br>";
     }
 }
+
+$db->close();
+
+$time_post = microtime(true);
+$exec_time = $time_post - $time_pre;
+
+echo "Updated library in " . $exec_time . " seconds";
 ?>

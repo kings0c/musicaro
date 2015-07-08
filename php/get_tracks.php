@@ -12,7 +12,7 @@ if($result = $db->query("SELECT * FROM track_library")) {
     while ($track = $result->fetch_assoc()) :
 ?>
 
-<div class="card music-item">
+<div class="card hoverable music-item">
     <div class="card-image">
         <?php
     if(file_exists($art_full_dir . $track['md5'] . ".jpg")) {
@@ -30,8 +30,8 @@ if($result = $db->query("SELECT * FROM track_library")) {
     <div class="card-content">
         <span class="track-title"><?php echo $track['title']; ?></span>
         <span class="track-artist"><?php echo $track['artist']; ?></span>
-        <p>Album: <?php echo $track['album']; ?></p>
-        <p>Length: <?php echo $track['duration']; ?>.</p>
+        <p>Album: <span class="track-album"><?php echo $track['album']; ?></span></p>
+        <p>Length: <span class="track-duration"><?php echo $track['duration']; ?></span></p>
     </div>
     <div class="card-action">
         <a href="#">Listen</a>

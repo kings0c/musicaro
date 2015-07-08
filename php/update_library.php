@@ -28,9 +28,7 @@ function rsearch($folder, $pattern) {
 }
 
 //Truncate existing library
-$query = "TRUNCATE table track_library");
-$query->execute();
-$query->close();
+$query = $db->query("TRUNCATE table track_library");
 
 //Now search file system for tracks
 
@@ -71,52 +69,69 @@ foreach($foundTracks as $file) {
         //Track is not in library
         //Get album art for it 
 
-        $key = "RAJWTI0UETKYDZE6R";
+        //First check ID3 tags
+        //If there's an image save it to album-art folder
+        $OldThisFileInfo = $getID3->analyze($file);
+        if(isset($OldThisFileInfo['comments']['picture'][0])) {
+            $data = 'data:' . $OldThisFileInfo['comments']['picture'][0]['image_mime'] . ';base64,' . 
+                base64_encode($OldThisFileInfo['comments']['picture'][0]['data']);
+            list($type, $data) = explode(';', $data);
+            list(, $data)      = explode(',', $data);
+            $data = base64_decode($data);
+            
+            list(, $fileExtension) = explode("/" , $OldThisFileInfo['comments']['picture'][0]['image_mime']);
+            if($fileExtension == "jpeg") $fileExtension = "jpg";
+            file_put_contents($music_dir . "/../album-art/" . $md5 . "." . $fileExtension, $data);
+        }
+        else {
+            $key = "RAJWTI0UETKYDZE6R";
 
-        $artistEncoded = urlencode($artist); // make sure to url encode an query parameters
-        $titleEncoded = urlencode($title);
+            $artistEncoded = urlencode($artist); // make sure to url encode an query parameters
+            $titleEncoded = urlencode($title);
 
-        // construct the query with our apikey and the query we want to make
-        $endpoint = 'http://developer.echonest.com/api/v4/song/search?api_key=' . $key . '&format=json&results=1&artist=' . $artistEncoded . 
-            '&title=' . $titleEncoded . '&bucket=id:7digital-US&bucket=tracks';
+            // construct the query with our apikey and the query we want to make
+            $endpoint = 'http://developer.echonest.com/api/v4/song/search?api_key=' . $key . '&format=json&results=1&artist=' . $artistEncoded . 
+                '&title=' . $titleEncoded . '&bucket=id:7digital-US&bucket=tracks';
 
-        // setup curl to make a call to the endpoint
-        $session = curl_init($endpoint);
+            // setup curl to make a call to the endpoint
+            $session = curl_init($endpoint);
 
-        // indicates that we want the response back
-        curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
+            // indicates that we want the response back
+            curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
 
-        // exec curl and get the data back
-        $data = curl_exec($session);
+            // exec curl and get the data back
+            $data = curl_exec($session);
 
-        // remember to close the curl session once we are finished retrieving the data
-        curl_close($session);
+            // remember to close the curl session once we are finished retrieving the data
+            curl_close($session);
 
-        // decode the json data to make it easier to parse the php
-        $search_results = json_decode($data);
+            // decode the json data to make it easier to parse the php
+            $search_results = json_decode($data);
 
-        if ($search_results === NULL) die('Error parsing json');
+            if ($search_results === NULL) die('Error parsing json');
 
-        $artURL = null;
+            $artURL = null;
 
-        if($search_results->response->status->code == 0) { //API returned a successful result
-            $artURL = $search_results->response->songs[0]->tracks[0]->release_image;
+            if($search_results->response->status->code == 0) { //API returned a successful result
+                $artURL = $search_results->response->songs[0]->tracks[0]->release_image;
+            }
+
+            if($artURL != null) { //We found the album art
+                //To Do - we only grab the 1st returned album art, will lead to same track different album problem
+
+                //Save the album art locally with track md5 as file name
+                file_put_contents("../album-art/" . $md5 . ".jpg", file_get_contents($artURL));
+
+            }
         }
 
-        if($artURL != null) { //We found the album art
-            //To Do - we only grab the 1st returned album art, will lead to same track different album problem
-
-            //Save the album art locally with track md5 as file name
-            file_put_contents("../album-art/" . $md5 . ".jpg", file_get_contents($artURL));
-
-        }
-        //Add the track to library
+        //Add the track to library table
         $stmt = $db->prepare("INSERT INTO track_library(track_id, title, album, artist, duration, md5, path) VALUES (null, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param('ssssss', $title, $album, $artist, $duration, $md5, $file);
         $stmt->execute();
         $stmt->close();
-
-        echo "Done.";
+        $db->close();
+        echo "Added track: " . $artist . " - " . $album . " - " . $title . "<br>";
     }
 }
 ?>

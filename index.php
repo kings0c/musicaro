@@ -29,32 +29,8 @@
         </nav>
 
         <main>
-            <div class="row">
-                
-                <div class="col s12">
-                    <?php
-                        /* https://api.discogs.com/database/search?q=Nirvana&key=foo123&secret=bar456 */
-                        $key = "KlcXtlqKXAGEMORXXqtZ";
-                        $secret = "oUgjEWDmHDCzfGryuYSmtBSfAWYAooZp";
-
-                        
-                    ?>
-                    <div class="card music-item">
-                        <div class="card-image">
-                            <img src="img/Awake.jpg">
-                            <span class="card-title">Dream Theater - Awake</span>
-                        </div>
-                        <div class="card-content">
-                            <p>I am a very simple card. I am good at containing small bits of information.
-                                I am convenient because I require little markup to use effectively.</p>
-                        </div>
-                        <div class="card-action">
-                            <a href="#">Listen</a>
-                        </div>
-                    </div>
-                    
-                </div>
-                
+            <div class="music-container">
+                <?php include("php/get_tracks.php"); ?>
             </div>
         </main>
 

@@ -2,9 +2,9 @@
 include("db_connect.php");
 /*
 * Initialize music library
-* Drops existing DB rows then
+* Truncates existing DB then
 * Scans library folder for mp3|flac
-* Pulls album art from echonest then
+* Pulls album art from id3 data, failing that - echonest then
 * Adds track info to library table
 */
 
@@ -34,7 +34,6 @@ $time_pre = microtime(true);
 $query = $db->query("TRUNCATE table track_library");
 
 //Now search file system for tracks
-
 $music_dir = "/Users/ings0c/Documents/Websites/musicaro/library";
 $foundTracks = rsearch($music_dir, "/^.+\.(mp3|flac)$/i");
 
@@ -133,7 +132,7 @@ foreach($foundTracks as $file) {
         $stmt->bind_param('ssssss', $title, $album, $artist, $duration, $md5, $file);
         $stmt->execute();
         $stmt->close();
-        echo "Added track: " . $artist . " - " . $album . " - " . $title . "<br>";
+        //echo "Added track: " . $artist . " - " . $album . " - " . $title . "<br>";
     }
 }
 
@@ -142,5 +141,5 @@ $db->close();
 $time_post = microtime(true);
 $exec_time = $time_post - $time_pre;
 
-echo "Updated library in " . $exec_time . " seconds";
+echo "Added " . sizeof($foundTracks) . " tracks in " . round($exec_time, 2) . " seconds.";
 ?>

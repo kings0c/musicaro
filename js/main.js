@@ -73,25 +73,46 @@ $(document).ready(function() {
             //alert("ready");
         }
     });
-    
+
     //Enable play links
     $(".play-track").click(function() {
-        
+
         $(".sm2-playlist-bd").empty(); //Empty the existing playlist
         //Append our track as a <li> element to playlist
         $(".sm2-playlist-bd").append("<li class='selected'><a href='" + $(this).data("url") + "'><b>" + $(this).data("artist") + "</b> - " + $(this).data("title") + "</a></li>");
-        
+
         //Play the track
         window.sm2BarPlayers[0].actions.play();
-        
+
         //Fixes bug where 1st track's title did not appear (bit hacky, changed line 105 of bar-ui.js
         window.sm2BarPlayers[0].playlistController.refresh();
         window.sm2BarPlayers[0].dom.setTitle(window.sm2BarPlayers[0].playlistController.getItem(0));
-        
+
     });
-    
+
     //Enable queue links
     $(".queue-track").click(function() {
         $(".sm2-playlist-bd").append("<li><a href='" + $(this).data("url") + "'><b>" + $(this).data("artist") + "</b> - " + $(this).data("title") + "</a></li>");
+    });
+
+    //Enable refresh (update-library) button
+    $("#update-library").click(function() {
+        $.ajax({
+            url: "php/update_library.php",
+            method: "POST"
+        }).done(function(html) {
+            Materialize.toast(html, 4000)  
+        });
+    });
+    
+    $("#update-library").click(function() {
+        $('#update-library-modal').openModal();
+        $.ajax({
+            url: "php/update_library.php",
+            method: "POST"
+        }).done(function(html) {
+            Materialize.toast(html, 4000);
+            $('#update-library-modal').closeModal();
+        });
     });
 });

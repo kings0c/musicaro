@@ -16,11 +16,12 @@ include('php/db_connect.php');
     </head>
     <body>
 
-        <nav class="cyan darken-1">
+        <nav class="">
             <div class="nav-wrapper">
                 <a href="#!" class="brand-logo">Musicaro</a>
                 <ul class="right hide-on-med-and-down">
-                    <li><a href="php/update_library.php"><i class="material-icons">refresh</i></a></li>
+                    <li><a id="update-library" class="tooltipped" data-position="bottom" 
+                           data-delay="50" data-tooltip="Update Library" href="#"><i class="material-icons">refresh</i></a></li>
                     <li><a href="sass.html"><i class="material-icons">search</i></a></li>
                     <li><a href="badges.html"><i class="material-icons">view_module</i></a></li>
                     <li><a href="collapsible.html"><i class="material-icons">refresh</i></a></li>
@@ -58,7 +59,7 @@ include('php/db_connect.php');
             </div>
 
             <div id="audio-player" class="cyan darken-2">
-                <div class="sm2-bar-ui full-width">
+                <div class="sm2-bar-ui full-width fixed">
 
                     <div class="bd sm2-main-controls">
 
@@ -121,15 +122,6 @@ include('php/db_connect.php');
                             </div>
                         </div>
 
-                        <!-- not implemented -->
-                        <!--
-<div class="sm2-inline-element sm2-button-element disabled">
-<div class="sm2-button-bd">
-<a href="#shuffle" title="Shuffle" class="sm2-inline-button shuffle">shuffle</a>
-</div>
-</div>
--->
-
                         <div class="sm2-inline-element sm2-button-element sm2-menu">
                             <div class="sm2-button-bd">
                                 <a href="#menu" class="sm2-inline-button menu">menu</a>
@@ -148,8 +140,6 @@ include('php/db_connect.php');
 
                                 <ul class="sm2-playlist-bd">
 
-                                    
-
                                 </ul>
 
                             </div>
@@ -163,6 +153,21 @@ include('php/db_connect.php');
         <footer>
 
         </footer>
+
+        <!-- Modal Structure -->
+        <div id="update-library-modal" class="modal">
+            <div class="modal-content">
+                <h4>Updating library</h4>
+                <p>This might take a few minutes...</p>
+                <div class="clear-loading loading-effect-2">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
+        </div>
+
         <script src="js/soundmanager2.js"></script>
         <script src="js/bar-ui.js"></script>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>

@@ -9,6 +9,11 @@ nav,
  background-image: linear-gradient(to bottom, rgba(255,255,255,0.125) 5%, rgba(255,255,255,0.125) 45%, rgba(255,255,255,0.15) 50%, rgba(0,0,0,0.1) 51%, rgba(0,0,0,0.1) 95%); /* W3C */
 }
 
+nav #search {
+    height: 64px;   
+    margin-bottom: 0;
+}
+
 .music-container {
     display: flex;
     flex-wrap: wrap;

@@ -75,7 +75,7 @@ $(document).ready(function() {
     });
 
     //Enable play links
-    $(".play-track").click(function() {
+    $(".music-item .play-track").click(function() {
 
         $(".sm2-playlist-bd").empty(); //Empty the existing playlist
         //Append our track as a <li> element to playlist
@@ -91,21 +91,12 @@ $(document).ready(function() {
     });
 
     //Enable queue links
-    $(".queue-track").click(function() {
+    $(".music-item .queue-track").click(function() {
         $(".sm2-playlist-bd").append("<li><a href='" + $(this).data("url") + "'><b>" + $(this).data("artist") + "</b> - " + $(this).data("title") + "</a></li>");
     });
 
-    //Enable refresh (update-library) button
-    $("#update-library").click(function() {
-        $.ajax({
-            url: "php/update_library.php",
-            method: "POST"
-        }).done(function(html) {
-            Materialize.toast(html, 4000)  
-        });
-    });
-    
-    $("#update-library").click(function() {
+    //Enable nav refresh (update-library) button
+    $("nav #update-library").click(function() {
         $('#update-library-modal').openModal();
         $.ajax({
             url: "php/update_library.php",
@@ -113,6 +104,31 @@ $(document).ready(function() {
         }).done(function(html) {
             Materialize.toast(html, 4000);
             $('#update-library-modal').closeModal();
+        });
+    });
+    
+    //Enable nav search button
+    $("nav #search-library").click(function() {
+        $(this).empty();
+        $(this).parent().append('<form><div class="input-field"><input id="search" type="search" required><label for="search"><i class="material-icons">search</i></label></div></form>');
+        
+        //Enable nav search bar function
+        $("nav form input").keyup(function() {
+            var searchString = $(this).val().toLowerCase();
+            
+            //Remove any .music-item where title album or artist does not match search string
+            $(".music-item").each(function() {
+                var myTitle = $(this).find(".track-title").text().toLowerCase();
+                var myArtist = $(this).find(".track-artist").text().toLowerCase();
+                var myAlbum = $(this).find(".track-album").text().toLowerCase();
+                
+                $(this).css("display", "none");
+                
+                if( myTitle.indexOf(searchString) != -1 || myArtist.indexOf(searchString) != -1 || myAlbum.indexOf(searchString) != -1 ) {
+                    $(this).css("display", "inline-block");
+                }
+            });
+            
         });
     });
 });

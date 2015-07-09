@@ -123,6 +123,8 @@ $(document).ready(function() {
                 $(this).css("display", "inline-block");
             }
         });
-
     });
+    
+    //Enable mobile side nav button
+    $(".button-collapse").sideNav();
 });

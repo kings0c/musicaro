@@ -19,7 +19,8 @@ include('php/db_connect.php');
         <nav class="">
             <div class="nav-wrapper">
                 <a href="#!" class="brand-logo">Musicaro</a>
-                <ul class="right hide-on-small-and-down">
+                <a href="#" data-activates="mobile-nav" class="button-collapse"><i class="material-icons">menu</i></a>
+                <ul class="right hide-on-med-and-down">
                     <li>
                         <form>
                             <div class="input-field">
@@ -33,6 +34,21 @@ include('php/db_connect.php');
                            data-delay="50" data-tooltip="Update Library" href="#"><i class="material-icons">refresh</i></a></li>
                     <li><a class="tooltipped" data-position="bottom" 
                            data-delay="50" data-tooltip="More" href="#"><i class="material-icons">more_vert</i></a></li>
+                </ul>
+                <ul class="side-nav light-blue darken-1" id="mobile-nav">
+                    <li>
+                        <form>
+                            <div class="input-field">
+                                <input id="search" type="search" required class="tooltipped" data-position="right" 
+                                       data-delay="50" data-tooltip="Search Library">
+                                <label for="search">Search</label>
+                            </div>
+                        </form>
+                    </li>
+                    <li><a id="update-library" class="tooltipped" data-position="right" 
+                           data-delay="50" data-tooltip="Update Library" href="#">Update Library</a></li>
+                    <li><a class="tooltipped" data-position="right" 
+                           data-delay="50" data-tooltip="More" href="#">More</a></li>
                 </ul>
             </div>
 

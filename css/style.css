@@ -2,6 +2,10 @@
     box-sizing: border-box;
 }
 
+body {
+    padding-bottom: 42px; /* For audio player */   
+}
+
 nav,
 #update-library-modal {
     background: #2288cc;

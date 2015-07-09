@@ -20,11 +20,19 @@ include('php/db_connect.php');
             <div class="nav-wrapper">
                 <a href="#!" class="brand-logo">Musicaro</a>
                 <ul class="right hide-on-small-and-down">
-                    <li><a id="search-library" href="#" class="tooltipped" data-position="bottom" 
-                           data-delay="50" data-tooltip="Search Library"><i class="material-icons">search</i></a></li>
+                    <li>
+                        <form>
+                            <div class="input-field">
+                                <input id="search" type="search" required class="tooltipped" data-position="bottom" 
+                                       data-delay="50" data-tooltip="Search Library">
+                                <label for="search"><i class="material-icons">search</i></label>
+                            </div>
+                        </form>
+                    </li>
                     <li><a id="update-library" class="tooltipped" data-position="bottom" 
                            data-delay="50" data-tooltip="Update Library" href="#"><i class="material-icons">refresh</i></a></li>
-                    <li><a href="mobile.html"><i class="material-icons">more_vert</i></a></li>
+                    <li><a class="tooltipped" data-position="bottom" 
+                           data-delay="50" data-tooltip="More" href="#"><i class="material-icons">more_vert</i></a></li>
                 </ul>
             </div>
 

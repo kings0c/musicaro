@@ -106,29 +106,23 @@ $(document).ready(function() {
             $('#update-library-modal').closeModal();
         });
     });
-    
-    //Enable nav search button
-    $("nav #search-library").click(function() {
-        $(this).empty();
-        $(this).parent().append('<form><div class="input-field"><input id="search" type="search" required><label for="search"><i class="material-icons">search</i></label></div></form>');
-        
-        //Enable nav search bar function
-        $("nav form input").keyup(function() {
-            var searchString = $(this).val().toLowerCase();
-            
-            //Remove any .music-item where title album or artist does not match search string
-            $(".music-item").each(function() {
-                var myTitle = $(this).find(".track-title").text().toLowerCase();
-                var myArtist = $(this).find(".track-artist").text().toLowerCase();
-                var myAlbum = $(this).find(".track-album").text().toLowerCase();
-                
-                $(this).css("display", "none");
-                
-                if( myTitle.indexOf(searchString) != -1 || myArtist.indexOf(searchString) != -1 || myAlbum.indexOf(searchString) != -1 ) {
-                    $(this).css("display", "inline-block");
-                }
-            });
-            
+
+    //Enable nav search bar function
+    $("nav form input").keyup(function() {
+        var searchString = $(this).val().toLowerCase();
+
+        //Remove any .music-item where title album or artist does not match search string
+        $(".music-item").each(function() {
+            var myTitle = $(this).find(".track-title").text().toLowerCase();
+            var myArtist = $(this).find(".track-artist").text().toLowerCase();
+            var myAlbum = $(this).find(".track-album").text().toLowerCase();
+
+            $(this).css("display", "none");
+
+            if( myTitle.indexOf(searchString) != -1 || myArtist.indexOf(searchString) != -1 || myAlbum.indexOf(searchString) != -1 ) {
+                $(this).css("display", "inline-block");
+            }
         });
+
     });
 });

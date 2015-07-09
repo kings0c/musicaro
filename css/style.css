@@ -14,6 +14,10 @@ nav #search {
     margin-bottom: 0;
 }
 
+nav .brand-logo {
+    margin-left: 20px;   
+}
+
 .music-container {
     display: flex;
     flex-wrap: wrap;

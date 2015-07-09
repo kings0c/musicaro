@@ -13,12 +13,12 @@ Web player working
 * A local web server running PHP and MySQL ([EasyPHP](http://www.easyphp.org/) for Windows or [AMPPS](http://www.ampps.com/) for MacOS for example)
 
 ## How to use
-1) Clone or download repository to a folder on your PC
-2) Create a new MYSQL database named "musicaro" without quotes
-3) Add a new user named musicaro to localhost
-3) Import musicaro.sql into your new database (phpmyadmin is probably the easiest way)
-4) Edit the password stored in php/db_connect.php
-5) Open index.php in a browser
+1. Clone or download repository to a folder on your PC
+2. Create a new MYSQL database named "musicaro" without quotes
+3. Add a new user named musicaro to localhost
+4. Import musicaro.sql into your new database (phpmyadmin is probably the easiest way)
+5. Edit the password stored in php/db_connect.php
+6. Open index.php in a browser
 
 ## Design Specs
 * Track music from multiple sources (Local, Spotify, Google Music...)

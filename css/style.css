@@ -32,6 +32,7 @@ nav .brand-logo {
 .music-item {
     display: inline-block;
     flex-basis: 200px;
+    -webkit-transition: -webkit-flex 250ms linear;
 }
 
 .music-item .card-content {

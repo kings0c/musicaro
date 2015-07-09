@@ -8,6 +8,22 @@ include("db_connect.php");
 * Adds track info to library table
 */
 
+/* Provides progress info as shown here http://www.htmlgoodies.com/beyond/php/show-progress-report-for-long-running-php-scripts.html */
+header('Content-Type: text/event-stream');
+// recommended to prevent caching of event data.
+header('Cache-Control: no-cache');
+
+function send_message($id, $message, $progress) {
+    $d = array('message' => $message , 'progress' => $progress);
+      
+    echo "id: $id" . PHP_EOL;
+    echo "data: " . json_encode($d) . PHP_EOL;
+    echo PHP_EOL;
+      
+    ob_flush();
+    flush();
+}
+
 require '../vendor/autoload.php';
 require_once('../getID3-master/getid3/getid3.php');
 use PhpId3\Id3TagsReader;
@@ -37,6 +53,8 @@ $query = $db->query("TRUNCATE table track_library");
 $music_dir = "/Users/ings0c/Documents/Websites/musicaro/library";
 $foundTracks = rsearch($music_dir, "/^.+\.(mp3|flac)$/i");
 
+$i = 0;
+
 foreach($foundTracks as $file) {
 
     // Initialize getID3 engine
@@ -57,6 +75,10 @@ foreach($foundTracks as $file) {
     $title = $ThisFileInfo['comments_html']['title'][0];
     $album = $ThisFileInfo['comments_html']['album'][0];
     $duration = $ThisFileInfo['playtime_string'];
+    
+    //Send message regarding progress to client
+    $i++;
+    send_message($i, 'Added track ' . $i . ' of ' . sizeof($foundTracks), round(($i/sizeof($foundTracks))*100), 2);
 
     /*
     *   Now check if the track's md5 is already in our library
@@ -123,7 +145,6 @@ foreach($foundTracks as $file) {
 
                 //Save the album art locally with track md5 as file name
                 file_put_contents("../album-art/" . $md5 . ".jpg", file_get_contents($artURL));
-
             }
         }
 
@@ -141,5 +162,5 @@ $db->close();
 $time_post = microtime(true);
 $exec_time = $time_post - $time_pre;
 
-echo "Added " . sizeof($foundTracks) . " tracks in " . round($exec_time, 2) . " seconds.";
+send_message('CLOSE', "Added " . sizeof($foundTracks) . " tracks in " . round($exec_time, 2) . " seconds.");
 ?>

@@ -96,14 +96,44 @@ $(document).ready(function() {
     });
 
     //Enable nav refresh (update-library) button
+    //Shows modal with progress bar
     $("nav #update-library").click(function() {
         $('#update-library-modal').openModal();
-        $.ajax({
-            url: "php/update_library.php",
-            method: "POST"
-        }).done(function(html) {
-            Materialize.toast(html, 4000);
-            $('#update-library-modal').closeModal();
+
+        es = new EventSource('php/update_library.php');
+
+        //a message is received
+        es.addEventListener('message', function(e) {
+            var result = JSON.parse( e.data );
+
+            $("#progress-status").text(result.message);       
+
+            if(e.lastEventId == 'CLOSE') {
+                $("#progress-status").text(result.message);
+                es.close();
+                var pBar = document.getElementById('progressor');
+                pBar.value = pBar.max; //max out the progress bar
+                setTimeout(function() {
+                    
+                    //Display a toast
+                    Materialize.toast("Library update complete", 4000);
+                    
+                    //Close the modal
+                    $('#update-library-modal').closeModal();
+                    
+                    //Now grab the updated library via AJAX and output to screen
+                    $.ajax({
+                        url: "php/get_tracks.php",
+                        method: "POST"
+                    }).done(function(html) {
+                        $(".music-container").html(html);
+                    });
+                }, 3000);
+            }
+            else {
+                var pBar = document.getElementById('progressor');
+                pBar.value = result.progress;
+            }
         });
     });
 
@@ -124,7 +154,7 @@ $(document).ready(function() {
             }
         });
     });
-    
+
     //Enable mobile side nav button
     $(".button-collapse").sideNav();
 });

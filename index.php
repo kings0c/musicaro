@@ -181,11 +181,13 @@ include('php/db_connect.php');
         <div id="update-library-modal" class="modal">
             <div class="modal-content">
                 <h4>Updating library</h4>
+                <br>
+                <br>
                 <p>This might take a few minutes...</p>
-                <div class="clear-loading loading-effect-2">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                <br>
+                <div id="progress-wrapper">
+                    <progress id='progressor' value="0" max='100' style=""></progress>
+                    <span id="progress-status"></span>
                 </div>
             </div>
             <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>

@@ -34,7 +34,21 @@ if($result = $db->query("SELECT * FROM track_library")) {
         <p>Length: <span class="track-duration"><?php echo $track['duration']; ?></span></p>
     </div>
     <div class="card-action">
-        <a href="#">Listen</a>
+        <a class="play-track" href="#" data-url="<?php  //Change path from 
+                        //http://127.0.0.1/Users/ings0c/Documents/Websites/musicaro/library/Culprate%20-%20Deliverance%20[2014]/01%20Whispers%20(Part%20I).mp3
+                        //To library/Culprate....
+            $relativePath = explode("musicaro/", $track['path']);
+            $relativePath = $relativePath[1];
+            echo $relativePath;
+        ?>" data-title="<?php echo $track['title']; ?>" data-artist="<?php echo $track['artist']; ?>">Listen</a>
+        
+        <a class="queue-track right" href="#" data-url="<?php  //Change path from 
+                        //http://127.0.0.1/Users/ings0c/Documents/Websites/musicaro/library/Culprate%20-%20Deliverance%20[2014]/01%20Whispers%20(Part%20I).mp3
+                        //To library/Culprate....
+            $relativePath = explode("musicaro/", $track['path']);
+            $relativePath = $relativePath[1];
+            echo $relativePath;
+        ?>" data-title="<?php echo $track['title']; ?>" data-artist="<?php echo $track['artist']; ?>">Queue</a>
     </div>
 </div>
 

@@ -2,7 +2,7 @@
 All your music in one place - a browser-based music player and organiser.
 
 ## Project Status
-**Alpha**
+**Alpha**  
 Searches library folder and adds tracks to library correctly.  
 Basic front-end design in place.  
 Sorting of tracks works  

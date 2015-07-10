@@ -35,4 +35,6 @@ Web player working
  * Folder structure organising
  * Playlists
  * Speed up library update
- * Incorrect track name bug
+ * Incorrect track name in player bug
+ * Pull artist data + images into new table on library update
+ * Implement artist tab + get_artists.php

@@ -56,7 +56,7 @@
             </div>
             
             <div id="artists-container" class="music-container">
-                <h1>Artists</h1>
+                <?php include("php/get_artists.php"); ?>
             </div>
             
             <div id="playlists-container" class="music-container">

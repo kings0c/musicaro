@@ -48,6 +48,7 @@ $time_pre = microtime(true);
 
 //Truncate existing library
 $query = $db->query("TRUNCATE table track_library");
+$query = $db->query("TRUNCATE table artist_library");
 
 //Now search file system for tracks
 $music_dir = "/Users/ings0c/Documents/Websites/musicaro/library";
@@ -150,6 +151,90 @@ foreach($foundTracks as $file) {
 
                 //Save the album art locally with track md5 as file name
                 file_put_contents("../album-art/" . $md5 . ".jpg", file_get_contents($artURL));
+            }
+        }
+        
+        //Now check if artist has been added
+        if($stmt = $db->prepare("SELECT name FROM artist_library WHERE name = ?")) {
+            $stmt->bind_param("s", $artist);
+            $stmt->execute();
+            $stmt->store_result();
+            $artistExists = false;
+            if($stmt->num_rows > 0) {
+                $artistExists = true;
+            }
+            $stmt->close();
+            
+            //Add the artist to library
+            if(!$artistExists) {
+                if($stmt2 = $db->prepare("INSERT INTO artist_library(artist_id, name) VALUES (null, ?)")) {
+                    $stmt2->bind_param("s", $artist);
+                    $stmt2->execute();
+                    $stmt2->close();
+                }
+            }
+            sleep(1); //Sleep so Deezer doesn't lock us out
+            //Now grab the artist image from Deezer
+            $artistEncoded = urlencode($artist);
+            //Two stages, first search for artist to get ID
+            //Then search artist ID to get image
+            $endpoint = "http://api.deezer.com/search?q=artist:%27" . $artistEncoded . "&limit=2&output=json";
+
+            // setup curl to make a call to the endpoint
+            $session = curl_init($endpoint);
+
+            // indicates that we want the response back
+            curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
+
+            // exec curl and get the data back
+            $data = curl_exec($session);
+
+            // remember to close the curl session once we are finished retrieving the data
+            curl_close($session);
+            
+            // decode the json data to make it easier to parse the php
+            $search_results = json_decode($data);
+            
+            if ($search_results === NULL) die('Error parsing json');
+
+            $artistID = null;
+
+            if($search_results->total > 0) { //API returned a successful result
+                $artistID = $search_results->data[0]->artist->id;
+            }
+
+            if($artURL != null) { //We found the artist ID
+                //Now find the image
+                
+                $endpoint = "http://api.deezer.com/artist/" . $artistEncoded . "&limit=2&output=json";
+
+                // setup curl to make a call to the endpoint
+                $session = curl_init($endpoint);
+
+                // indicates that we want the response back
+                curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
+
+                // exec curl and get the data back
+                $data = curl_exec($session);
+
+                // remember to close the curl session once we are finished retrieving the data
+                curl_close($session);
+
+                // decode the json data to make it easier to parse the php
+                $search_results = json_decode($data);
+
+                if ($search_results === NULL) die('Error parsing json');
+
+                $artistImage = null;
+
+                $artistImage = $search_results->picture;
+                
+                $md5ArtistName = md5($artist);
+                
+                //Save the album art locally with md5 of artist name as file name
+                if($artistImage != null) {
+                    file_put_contents("../artist-art/" . $md5ArtistName . ".jpg", file_get_contents($artistImage));
+                }
             }
         }
 

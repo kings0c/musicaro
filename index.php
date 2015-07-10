@@ -23,7 +23,7 @@
                 <div class="row">
                     <div class="col s6">
                         <ul class="tabs">
-                            <li class="tab col s3"><a class="active" href="#music-container">Tracks</a></li>
+                            <li class="tab col s3"><a class="active" href="#tracks-container">Tracks</a></li>
                             <li class="tab col s3"><a href="#albums-container">Albums</a></li>
                             <li class="tab col s3"><a href="#artists-container">Artists</a></li>
                             <li class="tab col s3"><a href="#playlists-container">Playlists</a></li>
@@ -47,8 +47,20 @@
                 </div>
             </div>
 
-            <div class="music-container">
+            <div id="tracks-container" class="music-container"><!--Check scripts first and remove class to match rest -->
                 <?php include("php/get_tracks.php"); ?>
+            </div>
+            
+            <div id="albums-container" class="music-container">
+                <?php include("php/get_albums.php"); ?>
+            </div>
+            
+            <div id="artists-container" class="music-container">
+                <h1>Artists</h1>
+            </div>
+            
+            <div id="playlists-container" class="music-container">
+                <h1>Playlists</h1>
             </div>
 
             <div id="audio-player" class="cyan darken-2">

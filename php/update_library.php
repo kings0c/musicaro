@@ -113,12 +113,14 @@ foreach($foundTracks as $file) {
 
             $artistEncoded = urlencode($artist); // make sure to url encode an query parameters
             $titleEncoded = urlencode($title);
+            $albumEncoded = urlencode($album);
 
             // construct the query with our apikey and the query we want to make
             /*$endpoint = 'http://developer.echonest.com/api/v4/song/search?api_key=' . $key . '&format=json&results=1&artist=' . $artistEncoded . 
                 '&title=' . $titleEncoded . '&bucket=id:7digital-US&bucket=tracks';*/
             
-            $endpoint = "http://api.deezer.com/search?q=artist:%27" . $artistEncoded . "%27%20track:%27" . $titleEncoded . "%27&limit=2&output=json";
+            $endpoint = "http://api.deezer.com/search?q=artist:%27" . $artistEncoded . "%27%20album:%27" .
+                                                                    $albumEncoded . "%27&limit=2&output=json";
 
             // setup curl to make a call to the endpoint
             $session = curl_init($endpoint);

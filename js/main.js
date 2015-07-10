@@ -126,7 +126,7 @@ $(document).ready(function() {
                         url: "php/get_tracks.php",
                         method: "POST"
                     }).done(function(html) {
-                        $(".music-container").html(html);
+                        $("#tracks-container").html(html); //Load returned data into tracks (needs other tabs too)
                     });
                 }, 3000);
             }

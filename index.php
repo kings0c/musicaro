@@ -20,23 +20,30 @@
         <main>
 
             <div id="top-controls">
-                <div class="left">
-
-                </div>
-
-                <div class="right">
-                    <label>Sort By: </label>
-                    <select id="sort-by" class="browser-default">
-                        <option value="" disabled selected>Choose your option</option>
-                        <option value="1">Title (Asc)</option>
-                        <option value="2">Title (Desc)</option>
-                        <option value="3">Artist (Asc)</option>
-                        <option value="4">Artist (Desc)</option>
-                        <option value="5">Album (Asc)</option>
-                        <option value="6">Album (Desc)</option>
-                        <option value="7">Duration (Asc)</option>
-                        <option value="8">Duration (Desc)</option>
-                    </select>
+                <div class="row">
+                    <div class="col s6">
+                        <ul class="tabs">
+                            <li class="tab col s3"><a class="active" href="#music-container">Tracks</a></li>
+                            <li class="tab col s3"><a href="#albums-container">Albums</a></li>
+                            <li class="tab col s3"><a href="#artists-container">Artists</a></li>
+                            <li class="tab col s3"><a href="#playlists-container">Playlists</a></li>
+                        </ul>
+                    </div>
+                    <div class="col s6">
+                        <div class="right">
+                            <select id="sort-by" class="browser-default">
+                                <option value="" disabled selected>Sort By</option>
+                                <option value="1">Title (Asc)</option>
+                                <option value="2">Title (Desc)</option>
+                                <option value="3">Artist (Asc)</option>
+                                <option value="4">Artist (Desc)</option>
+                                <option value="5">Album (Asc)</option>
+                                <option value="6">Album (Desc)</option>
+                                <option value="7">Duration (Asc)</option>
+                                <option value="8">Duration (Desc)</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -22,6 +22,20 @@ nav .brand-logo {
     margin-left: 20px;   
 }
 
+#tabs-wrapper {
+    
+}
+
+#top-controls {
+    position: relative;
+    overflow: hidden;
+    padding: 20px 20px 0 20px;
+}
+
+#top-controls > .row {
+    margin-bottom: 0;
+}
+
 .music-container {
     display: flex;
     flex-wrap: wrap;
@@ -54,11 +68,6 @@ nav .brand-logo {
 .track-artist {
     font-weight: 700;
     display: block;
-}
-
-#top-controls {
-    overflow: hidden;
-    padding: 20px 20px 0 20px;
 }
 
 #audio-player {

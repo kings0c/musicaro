@@ -109,13 +109,16 @@ foreach($foundTracks as $file) {
         }
         else {
             $key = "RAJWTI0UETKYDZE6R";
+            $secret = "32fbc9323bfc1d55ef9c6b6d76e4515b";
 
             $artistEncoded = urlencode($artist); // make sure to url encode an query parameters
             $titleEncoded = urlencode($title);
 
             // construct the query with our apikey and the query we want to make
-            $endpoint = 'http://developer.echonest.com/api/v4/song/search?api_key=' . $key . '&format=json&results=1&artist=' . $artistEncoded . 
-                '&title=' . $titleEncoded . '&bucket=id:7digital-US&bucket=tracks';
+            /*$endpoint = 'http://developer.echonest.com/api/v4/song/search?api_key=' . $key . '&format=json&results=1&artist=' . $artistEncoded . 
+                '&title=' . $titleEncoded . '&bucket=id:7digital-US&bucket=tracks';*/
+            
+            $endpoint = "http://api.deezer.com/search?q=artist:%27" . $artistEncoded . "%27%20track:%27" . $titleEncoded . "%27&limit=2&output=json";
 
             // setup curl to make a call to the endpoint
             $session = curl_init($endpoint);
@@ -128,16 +131,16 @@ foreach($foundTracks as $file) {
 
             // remember to close the curl session once we are finished retrieving the data
             curl_close($session);
-
+            
             // decode the json data to make it easier to parse the php
             $search_results = json_decode($data);
-
+            
             if ($search_results === NULL) die('Error parsing json');
 
             $artURL = null;
 
-            if($search_results->response->status->code == 0) { //API returned a successful result
-                $artURL = $search_results->response->songs[0]->tracks[0]->release_image;
+            if($search_results->total > 0) { //API returned a successful result
+                $artURL = $search_results->data[0]->album->cover;
             }
 
             if($artURL != null) { //We found the album art

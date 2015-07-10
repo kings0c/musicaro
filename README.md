@@ -35,3 +35,4 @@ Web player working
  * Folder structure organising
  * Playlists
  * Speed up library update
+ * Incorrect track name bug

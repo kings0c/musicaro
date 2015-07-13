@@ -11,7 +11,7 @@ if($result = $db->query("SELECT * FROM track_library")) {
 
     while ($track = $result->fetch_assoc()) :
 ?>
-
+<!-- Begin utils/get_tracks.php -->
 <div class="card hoverable music-item">
     <div class="card-image">
         <?php
@@ -61,3 +61,4 @@ if($result = $db->query("SELECT * FROM track_library")) {
     $db->close();
 }
 ?>
+<!-- End utils/get_tracks.php -->

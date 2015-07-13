@@ -14,7 +14,7 @@
     <body>
 
         <nav>
-            <?php include("templates/top-bar.php"); ?>
+            <?php require("templates/top_bar.php"); ?>
         </nav>
 
         <main>
@@ -48,15 +48,15 @@
             </div>
 
             <div id="tracks-container" class="music-container"><!--Check scripts first and remove class to match rest -->
-                <?php include("php/get_tracks.php"); ?>
+                <?php require("php/get_tracks.php"); ?>
             </div>
             
             <div id="albums-container" class="music-container">
-                <?php include("php/get_albums.php"); ?>
+                <?php require("php/get_albums.php"); ?>
             </div>
             
             <div id="artists-container" class="music-container">
-                <?php include("php/get_artists.php"); ?>
+                <?php require("php/get_artists.php"); ?>
             </div>
             
             <div id="playlists-container" class="music-container">

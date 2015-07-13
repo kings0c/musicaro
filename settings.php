@@ -13,7 +13,7 @@
     <body>
 
         <nav>
-            <?php include("templates/top-bar.php"); ?>
+            <?php require("templates/top_bar.php"); ?>
         </nav>
 
         <main>

@@ -12,7 +12,7 @@ if($result = $db->query("SELECT * FROM artist_library")) {
     while ($artist = $result->fetch_assoc()) :
         $name_md5 = md5($artist['name']);
 ?>
-
+<!-- Begin utils/get_artists.php -->
 <div class="card hoverable music-item">
     <div class="card-image">
         <?php
@@ -45,3 +45,4 @@ if($result = $db->query("SELECT * FROM artist_library")) {
     $db->close();
 }
 ?>
+<!-- End utils/get_artists.php -->

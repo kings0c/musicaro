@@ -13,7 +13,7 @@ if($result = $db->query("SELECT * FROM track_library")) {
         if( !in_array($track['album'], $albumsSoFar)):
             array_push($albumsSoFar, $track['album']);
 ?>
-
+<!-- Begin utils/get_albums.php -->
 <div class="card hoverable music-item">
     <div class="card-image">
         <?php
@@ -63,3 +63,4 @@ if($result = $db->query("SELECT * FROM track_library")) {
     $db->close();
 }
 ?>
+<!-- End utils/get_albums.php -->

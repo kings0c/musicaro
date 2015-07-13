@@ -1,11 +1,15 @@
-//Sort tracks given param and order (eg sortTracksBy("title", "asc") )
+//Sort tracks given param and order
+//Param can be one of title / artists / album
+//Order must be either "asc" or "desc"
 function sortTracksBy(param, order) {
+    //Add each track to an array so we can sort them
     var tracks = [];
     $(".music-item").each(function() {
         tracks.push($(this));
     });
 
     tracks.sort(function(a, b) {
+        //Numerically compare the lowercase version of each strings
         if(a.find(".track-" + param).text().toLowerCase() < b.find(".track-" + param).text().toLowerCase()) {
             if(order == "asc") return -1;   
             else return 1;
@@ -16,19 +20,25 @@ function sortTracksBy(param, order) {
         }
         return 0;
     });
-
+    
+    //Now set the flexbox order property according to their order in the array
     for(var i=0; i < tracks.length; i++) {
         tracks[i].css("order", i);   
     }
 }
 
+//Sort tracks by duration by specified order
+//Order must be either "asc" or "desc"
 function sortTracksByDuration(order) {
+    //Add each track to an array so we can sort them
     var tracks = [];
     $(".music-item").each(function() {
         tracks.push($(this));
     });
-
+    
     tracks.sort(function(a, b) {
+        //Split the duration text up around : (eg 3:10 goes to [[0] => 3, [1] => 10]
+        //Convert it to seconds and sort
         var time1secs = a.find(".track-duration").text().toLowerCase().split(":");
         time1secs = 60*parseInt(time1secs[0]) + parseInt(time1secs[1]);
 
@@ -45,7 +55,8 @@ function sortTracksByDuration(order) {
         }
         return 0;
     });
-
+    
+    //Now set the flexbox order property according to their order in the array
     for(var i=0; i < tracks.length; i++) {
         tracks[i].css("order", i);   
     }
@@ -54,6 +65,9 @@ function sortTracksByDuration(order) {
 $(document).ready(function() {
 
     //Enable sort by dropdown
+    
+    //***Could probably change this to call correct function by slicing up the dropdown value
+    // Likely a waste of time while there's so few options
     $("#sort-by").change(function() {
         if($(this).val() == 1) sortTracksBy("title", "asc");
         else if($(this).val() == 2) sortTracksBy("title", "desc");
@@ -65,16 +79,18 @@ $(document).ready(function() {
         else if($(this).val() == 8) sortTracksByDuration("desc");
     });
 
+    //Set up soundManager so we can play audio
+    //http://www.schillmania.com/projects/soundmanager2/
     soundManager.setup({
         // where to find flash audio SWFs, as needed
         url: 'swf/',
         onready: function() {
             // SM2 is ready to play audio!
-            //alert("ready");
+            // We should disable the listen buttons until soundmanager is ready
         }
     });
 
-    //Enable play links
+    //Enable play links for each track
     $(".music-item .play-track").click(function() {
 
         $(".sm2-playlist-bd").empty(); //Empty the existing playlist
@@ -85,6 +101,7 @@ $(document).ready(function() {
         window.sm2BarPlayers[0].actions.play();
 
         //Fixes bug where 1st track's title did not appear (bit hacky, changed line 105 of bar-ui.js
+        //This needs verifying
         window.sm2BarPlayers[0].playlistController.refresh();
         window.sm2BarPlayers[0].dom.setTitle(window.sm2BarPlayers[0].playlistController.getItem(0));
 
@@ -95,12 +112,14 @@ $(document).ready(function() {
         $(".sm2-playlist-bd").append("<li><a href='" + $(this).data("url") + "'><b>" + $(this).data("artist") + "</b> - " + $(this).data("title") + "</a></li>");
     });
 
-    //Enable nav refresh (update-library) button
-    //Shows modal with progress bar
+    //Enable nav refresh (update-library) button in nav bar
+    //Shows modal #update-library-modal with progress bar and info
     $("nav #update-library").click(function() {
         $('#update-library-modal').openModal();
-
-        es = new EventSource('php/update_library.php');
+        
+        //Listen for events from our php script so we can show progress
+        //http://www.htmlgoodies.com/beyond/php/show-progress-report-for-long-running-php-scripts.html
+        es = new EventSource('utils/update_library.php');
 
         //a message is received
         es.addEventListener('message', function(e) {
@@ -123,7 +142,7 @@ $(document).ready(function() {
                     
                     //Now grab the updated library via AJAX and output to screen
                     $.ajax({
-                        url: "php/get_tracks.php",
+                        url: "utils/get_tracks.php",
                         method: "POST"
                     }).done(function(html) {
                         $("#tracks-container").html(html); //Load returned data into tracks (needs other tabs too)

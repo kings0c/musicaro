@@ -153,6 +153,22 @@
                     </div>
                 </div>
             </div>
+            
+            <noscript>
+                <div id="noscript-warning">
+                    <div class="row">
+                        <div class="col s6 offset-3">
+                            <h2>Your browser does not support Javascript.</h2>
+                            <p>Please enable it to continue.</p>
+                            <style>
+                                .music-container {
+                                    display: none; 
+                                }  
+                            </style>
+                        </div>
+                    </div>
+                </div>
+            </noscript>
         </main>
 
         <footer>

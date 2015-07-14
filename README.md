@@ -30,11 +30,10 @@ Web player working
 * Playlists
 
 ## To Do
+ * Pull local files using Javascript File API (Chrome only)
  * 3rd Party Music provider integration (Spotify etc) 
  * Test on mobiles
  * Folder structure organising
  * Playlists
  * Speed up library update
  * Incorrect track name in player bug
- * Pull artist data + images into new table on library update
- * Implement artist tab + get_artists.php

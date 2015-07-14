@@ -1,7 +1,7 @@
 <?php
-/*  Pull top x tracks from tracks_library table
+/*  Pull all tracks from artist_library table
 *   Output as a Materialize.css card with album art
-*
+*   
 */
 
 include('db_connect.php');

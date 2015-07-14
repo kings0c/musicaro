@@ -2,10 +2,10 @@
 include("db_connect.php");
 /*
 * Initialize music library
-* Truncates existing DB then
+* Truncates tracks_library and artists_library
 * Scans library folder for mp3|flac
-* Pulls album art from id3 data, failing that - echonest then
-* Adds track info to library table
+* Pulls album art from id3 data, failing that - Deezer
+* Repopulates both tables
 */
 
 /* Provides progress info as shown here http://www.htmlgoodies.com/beyond/php/show-progress-report-for-long-running-php-scripts.html */
@@ -43,10 +43,10 @@ function rsearch($folder, $pattern) {
     return $fileList;
 }
 
-//Track execution time
+//Track script execution time
 $time_pre = microtime(true);
 
-//Truncate existing library
+//Truncate existing libraries
 $query = $db->query("TRUNCATE table track_library");
 $query = $db->query("TRUNCATE table artist_library");
 
@@ -83,7 +83,7 @@ foreach($foundTracks as $file) {
 
     /*
     *   Now check if the track's md5 is already in our library
-    *   If so, skip it - else add track to library
+    *   !If so, skip it - else add track to library
     */
 
     $query = "SELECT * FROM track_library WHERE md5 = '$md5'";
@@ -109,16 +109,14 @@ foreach($foundTracks as $file) {
             file_put_contents($music_dir . "/../album-art/" . $md5 . "." . $fileExtension, $data);
         }
         else {
-            $key = "RAJWTI0UETKYDZE6R";
-            $secret = "32fbc9323bfc1d55ef9c6b6d76e4515b";
+            //No image in ID3, lets try get one from Deezer
 
             $artistEncoded = urlencode($artist); // make sure to url encode an query parameters
             $titleEncoded = urlencode($title);
             $albumEncoded = urlencode($album);
 
-            // construct the query with our apikey and the query we want to make
-            /*$endpoint = 'http://developer.echonest.com/api/v4/song/search?api_key=' . $key . '&format=json&results=1&artist=' . $artistEncoded . 
-                '&title=' . $titleEncoded . '&bucket=id:7digital-US&bucket=tracks';*/
+            // construct the query for deezer eg:
+            //"http://api.deezer.com/search?q=artist:%27dream%20theater%27%20album:%27images%20and%20words%27&limit=2&output=json";
             
             $endpoint = "http://api.deezer.com/search?q=artist:%27" . $artistEncoded . "%27%20album:%27" .
                                                                     $albumEncoded . "%27&limit=2&output=json";
@@ -138,11 +136,12 @@ foreach($foundTracks as $file) {
             // decode the json data to make it easier to parse the php
             $search_results = json_decode($data);
             
-            if ($search_results === NULL) die('Error parsing json');
+            //Maybe we should just skip this track rather than killing the script?
+            if ($search_results === NULL) die('Error parsing json'); 
 
             $artURL = null;
 
-            if($search_results->total > 0) { //API returned a successful result
+            if($search_results->total > 0) { //API returned a successful result, grab the url for album art
                 $artURL = $search_results->data[0]->album->cover;
             }
 
@@ -154,7 +153,7 @@ foreach($foundTracks as $file) {
             }
         }
         
-        //Now check if artist has been added
+        //Now check if artist has already been added to artist_library
         if($stmt = $db->prepare("SELECT name FROM artist_library WHERE name = ?")) {
             $stmt->bind_param("s", $artist);
             $stmt->execute();

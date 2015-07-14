@@ -1,5 +1,7 @@
 <?php
 /*  Pull top x tracks from tracks_library table
+*   Only count the 1st track from each album
+*   Use it's art as the album art
 *   Output as a Materialize.css card with album art
 *
 */

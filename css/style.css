@@ -2,21 +2,24 @@
 {
     box-sizing: border-box;
 }
-
 body
 {
-    padding-bottom: 42px; /* For audio player */
+    padding-bottom: 42px;
+    /* For audio player */
 }
-
 #noscript-warning
 {
     width: 100%;
     height: 100vh;
 }
-
 #noscript-warning h2
 {
     font-size: 1.4em;
+}
+
+#select-library-location-wrapper {
+    text-align: center;
+    height: calc(100vh - 64px - 68px - 42px); /* top-bar - tabs - audioplayer */
 }
 
 #albums-container,
@@ -25,28 +28,25 @@ body
 {
     display: flex;
 }
-
 nav,
-#update-library-modal
+#update-library-modal,
+#select-library-location-wrapper > .col
 {
     background: #28c;
-    background-image: -moz-linear-gradient(to bottom, rgba(255,255,255,.125) 5%, rgba(255,255,255,.125) 45%, rgba(255,255,255,.15) 52%, rgba(0,0,0,.01) 51%, rgba(0,0,0,.1) 95%); /* W3C */
-    background-image:      linear-gradient(to bottom, rgba(255,255,255,.125) 5%, rgba(255,255,255,.125) 45%, rgba(255,255,255,.15) 50%, rgba(0,0,0,.1) 51%, rgba(0,0,0,.1) 95%); /* W3C */
+    background-image: -moz-linear-gradient(to bottom, rgba(255, 255, 255, .125) 5%, rgba(255, 255, 255, .125) 45%, rgba(255, 255, 255, .15) 52%, rgba(0, 0, 0, .01) 51%, rgba(0, 0, 0, .1) 95%);
+    /* W3C */
+    background-image:      linear-gradient(to bottom, rgba(255, 255, 255, .125) 5%, rgba(255, 255, 255, .125) 45%, rgba(255, 255, 255, .15) 50%, rgba(0, 0, 0, .1) 51%, rgba(0, 0, 0, .1) 95%);
+    /* W3C */
 }
-
 nav #search
 {
     height: 64px;
     margin-bottom: 0;
 }
-
 nav .brand-logo
 {
     margin-left: 20px;
 }
-
-
-
 #top-controls
 {
     position: relative;
@@ -55,12 +55,10 @@ nav .brand-logo
 
     padding: 20px 20px 0 20px;
 }
-
 #top-controls > .row
 {
     margin-bottom: 0;
 }
-
 .music-container
 {
     display: flex;
@@ -70,7 +68,6 @@ nav .brand-logo
     flex-wrap: wrap;
     justify-content: space-around;
 }
-
 .music-item
 {
     display: inline-block;
@@ -79,12 +76,10 @@ nav .brand-logo
 
     flex-basis: 200px;
 }
-
 .music-item .card-content
 {
     padding-bottom: 85px;
 }
-
 .music-item .card-action
 {
     position: absolute;
@@ -93,12 +88,10 @@ nav .brand-logo
     width: 100%;
     height: 62px;
 }
-
 .card .card-action a:last-child
 {
     margin-right: 0 !important;
 }
-
 .track-title,
 .track-artist
 {
@@ -106,7 +99,6 @@ nav .brand-logo
 
     display: block;
 }
-
 #audio-player
 {
     position: fixed;
@@ -117,26 +109,20 @@ nav .brand-logo
 
     text-align: center;
 }
-
-
-
 #update-library-modal .clear-loading
 {
     margin-top: 60px;
 }
-
 #update-library-modal .modal-close
 {
     position: absolute;
     top: 0;
     right: 0;
 }
-
 .modal-content
 {
     text-align: center;
 }
-
 #progress-wrapper
 {
     display: inline-block;

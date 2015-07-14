@@ -1,9 +1,14 @@
+/*
+*   Check for File API support, if supported add a listener to the change event of browse button
+*   Then load ID3 tag reader, for each file object from browse
+*   output a materialize.css card with the title, artist and album art
+*/
+
 // Check for the various File API support.
 if (window.File && window.FileReader && window.FileList && window.Blob) {
     // Great success! All the File APIs are supported.
     function handleFileSelect(evt) {
         var files = evt.target.files; // FileList object
-        
 
         // files is a FileList of File objects. List some properties.
         var output = [];
@@ -42,11 +47,11 @@ if (window.File && window.FileReader && window.FileList && window.Blob) {
                         }
                         imagesrc = "data:" + image.format + ";base64," + window.btoa(base64String);
                     }
-                    $(".music-container").append("<div class='card hoverable music-item'>" + 
-                                            "<div class='card-image'>" + 
+                    $(".music-container").append("<div class='card hoverable music-item'>" +
+                                            "<div class='card-image'>" +
                                                 "<img src='" + imagesrc + "'>" +
-                                            "</div>" + 
-                                            "<div class='card-content'>" + 
+                                            "</div>" +
+                                            "<div class='card-content'>" +
                                                 "<span class='track-title'>" + tags.title + "</span>" +
                                                 "<span class='track-artist'>" + tags.artist + "</span>" +
                                                 "<span class='track-album'>" + tags.album + "</span>" +
@@ -58,13 +63,13 @@ if (window.File && window.FileReader && window.FileList && window.Blob) {
                                       "</div>");
                 }
                 else {
-                    console.log("No tags");   
+                    console.log("No tags");
                 }
             },
                          {tags: ["artist", "title", "album", "year", "comment", "track", "genre", "lyrics", "picture"],
                           dataReader: reader});
 
-            
+
         }
     }
 

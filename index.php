@@ -48,17 +48,17 @@
             </div>
 
             <div id="tracks-container" class="music-container"><!--Check scripts first and remove class to match rest -->
-                <?php require("php/get_tracks.php"); ?>
+                <?php //require("utils/get_tracks.php"); ?>
             </div>
-            
+
             <div id="albums-container" class="music-container">
-                <?php require("php/get_albums.php"); ?>
+                <?php //require("utils/get_albums.php"); ?>
             </div>
-            
+
             <div id="artists-container" class="music-container">
-                <?php require("php/get_artists.php"); ?>
+                <?php //require("utils/get_artists.php"); ?>
             </div>
-            
+
             <div id="playlists-container" class="music-container">
                 <h1>Playlists</h1>
             </div>
@@ -153,7 +153,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <noscript>
                 <div id="noscript-warning">
                     <div class="row">
@@ -162,8 +162,8 @@
                             <p>Please enable it to continue.</p>
                             <style>
                                 .music-container {
-                                    display: none; 
-                                }  
+                                    display: none;
+                                }
                             </style>
                         </div>
                     </div>

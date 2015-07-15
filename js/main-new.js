@@ -186,17 +186,17 @@ function LibraryManager() {
         $("#select-library-location-wrapper").hide(1000);
 
         // files is a FileList of File objects. List some properties.
-        for (var i = 0; i<files.length; i++) {
+        for (var i = 0; i < files.length; i++) {
             function first() {
                 var f = files[i];
-                if(f.type == "audio/mp3") {
+                if (f.type == "audio/mp3") {
                     var reader = new FileAPIReader(f);
                     var url = f.urn || f.name;
                     var objectURL = window.URL.createObjectURL(f);
                     second(f, reader, objectURL);
                 }
             }
-            
+
             function second(f, reader, objectURL) {
                 ID3.loadTags(objectURL, function () {
                     var tags = ID3.getAllTags(objectURL);
@@ -234,7 +234,7 @@ function LibraryManager() {
                     dataReader: reader
                 });
             }
-            
+
             first();
         }
     };
@@ -300,19 +300,19 @@ function LibraryManager() {
         //Enable play links for each track
         $(".music-item .play-track").click(function (e) {
 
-            $(".sm2-playlist-bd").empty(); //Empty the existing playlist
-            
+            /*$(".sm2-playlist-bd").empty(); //Empty the existing playlist
+
             //Append our track as a <li> element to playlist
-            $(".sm2-playlist-bd").append("<li class='selected'><a href='" + $(this).data("url") + "'><b>" + $(this).data("artist") + "</b> - " + $(this).data("title") + "</a></li>");
+            $(".sm2-playlist-bd").append("<li class='selected'><a href='" + $(this).data("url") + "'><b>" + $(this).data("artist") + "</b> - " + $(this).data("title") + "</a></li>");*/
 
-            //Start the player
-            window.sm2BarPlayers[0].actions.play();
+            var audio = document.getElementById('html5-audio');
+            $("#html5-audio").append("<source id='track1' src='' type='audio/mpeg'></source>");
+            var source = document.getElementById('track1');
+            source.src = $(this).data("url");
 
-            //Fixes bug where 1st track's title did not appear (bit hacky, changed line 105 of bar-ui.js
-            //This needs verifying
-            window.sm2BarPlayers[0].playlistController.refresh();
-            window.sm2BarPlayers[0].dom.setTitle(window.sm2BarPlayers[0].playlistController.getItem(0));
-            
+            audio.load(); //call this to just preload the audio without playing
+            audio.play(); //call this to play the song right away
+
             e.preventDefault();
 
             return false;

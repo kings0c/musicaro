@@ -75,6 +75,7 @@
 
         <div id="audio-player" class="cyan darken-2">
             <audio id="html5-audio" controls></audio>
+            <div id="playlist"></div>
         </div>
 
         <noscript>
@@ -123,7 +124,7 @@
     </script>
     <script src="js/materialize.min.js"></script>
     <script src="js/id3-minimized.js"></script>
-    <script src="js/main-new.js"></script>
+    <script src="js/main.js"></script>
 </body>
 
 </html>

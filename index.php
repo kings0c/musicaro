@@ -73,7 +73,7 @@
             <h1>Playlists</h1>
         </div>
 
-        <div id="audio-player" class="cyan darken-2">
+        <div id="audio-player" class="">
             <audio id="html5-audio" controls></audio>
             <div id="playlist"></div>
         </div>

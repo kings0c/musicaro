@@ -93,7 +93,6 @@ nav .brand-logo {
 #html5-audio {
     margin-top: 6px; /* Change this to proper vertical center later */
     display: inline-block;
-    vertical-align: middle;
 }
 
 #update-library-modal .clear-loading {

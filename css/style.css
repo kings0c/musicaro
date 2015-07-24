@@ -2,8 +2,8 @@
     box-sizing: border-box;
 }
 body {
-    padding-bottom: 42px;
     /* For audio player */
+    padding-bottom: 42px;
 }
 #noscript-warning {
     width: 100%;
@@ -12,9 +12,13 @@ body {
 #noscript-warning h2 {
     font-size: 1.4em;
 }
+
+#select-library-location-wrapper > .col {
+    padding: 10px 0 20px 0;
+}
+
 #select-library-location-wrapper {
     /* top-bar - tabs - audioplayer */
-    margin-bottom: 0;
     height: calc(100vh - 64px - 68px - 42px);
     /* Override .row style */
     text-align: center;

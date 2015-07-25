@@ -50,7 +50,7 @@
         </div>
 
         <div id="select-library-location-wrapper" class="row valign-wrapper">
-            <div class="col s6 offset-s3 hoverable valign">
+            <div class="col s6 offset-s3 valign z-depth-3">
                 <h4>Your library is empty.</h4>
                 <p>Please select a folder containing music to add it.</p>
                 <input type="file" id="library-location" name="files[]" webkitdirectory directory multiple>
@@ -74,7 +74,9 @@
         </div>
 
         <div id="audio-player" class="">
-            <audio id="html5-audio" controls></audio>
+            <audio id="html5-audio" controls>
+                <source id='track1' src='' type='audio/mpeg'></source>
+            </audio>
             <div id="playlist"></div>
         </div>
 
@@ -115,7 +117,7 @@
         <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
     </div>
 
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
     <script>
         window.jQuery || document.write('<script src="js/jquery.min.js">\x3C/script>')
 

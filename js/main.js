@@ -146,6 +146,10 @@ $(document).ready(function () {
     //Start library manager
     window.libManager = new LibraryManager();
     window.libManager.init();
+
+    //Start playlist manager.
+    window.playlistManager = new PlaylistManager();
+    window.playlistManager.init();
 });
 
 /*   Library manager class.
@@ -156,6 +160,7 @@ $(document).ready(function () {
 
 function LibraryManager() {
     var _this = this;
+    var promises;
 
     //Check for File API support and bind to change event of <input type=file>
     this.init = function () {
@@ -165,6 +170,8 @@ function LibraryManager() {
         } else {
             $("#select-library-location-wrapper").html('The File APIs are not fully supported in this browser.');
         }
+        
+        this.promises = [];
     };
 
     this.getAlbumArtFromDeezer = function (title, artist, album) {
@@ -177,7 +184,7 @@ function LibraryManager() {
 
         var titleEndpoint = "http://api.deezer.com/search?q=artist:%27" + artistEncoded + "%27%20title:%27" +
             titleEncoded + "%27&limit=2&output=jsonp&callback=deezerCallback";
-        
+
         //Above is legacy, keep just incase changes
 
         //Request JSONP from Deezer
@@ -212,67 +219,87 @@ function LibraryManager() {
         // For each file that is an mp3, load the id3 tags and output a card
         // After we've finished, enable the play/queue links and populate the other tabs
         //
-        // ID3.loadTags wrapped into a function so we wait for it to return
-        // Was having an issue where all tracks were reported with the same id3 tags
-        for (var i = 0; i < files.length; i++) {
+        // ID3.loadTags is called async
+        // We need to update play / queue after tracks are added
+        // So use promises
 
-            var f = files[i];
-            if (f.type == "audio/mp3") {
-                var reader = new FileAPIReader(f);
-                var url = f.urn || f.name;
-                var objectURL = window.URL.createObjectURL(f);
+        processFiles();
 
-                getTagsFromFile(f, reader, objectURL);
-            }
+        function processFiles() {
+            for (var i = 0; i < files.length; i++) {
+                
+                var f = files[i];
+                if (f.type == "audio/mp3") {
+                    var reader = new FileAPIReader(f);
+                    var url = f.urn || f.name;
+                    var objectURL = window.URL.createObjectURL(f);
+                    getTagsFromFile(f, reader, objectURL);
+                }
 
-            function getTagsFromFile(f, reader, objectURL) {
-                ID3.loadTags(objectURL, function () {
-                    var tags = ID3.getAllTags(objectURL);
-                    if (tags) {
-                        var artist = tags.artist || "";
-                        var title = tags.title || "";
-                        var album = tags.album || "";
-                        var year = tags.year || "";
-                        var imagesrc = "image/default.png"; //Default image
-                        if ("picture" in tags) {
-                            var image = tags.picture;
-                            var base64String = "";
-                            for (var j = 0; j < image.data.length; j++) {
-                                base64String += String.fromCharCode(image.data[j]);
+                function getTagsFromFile(f, reader, objectURL) {
+                    //Create a new deferred and place it on the promises stack.
+                    var def = new $.Deferred();
+                    _this.promises.push(def);
+                    
+                    ID3.loadTags(objectURL, function () {
+                        var tags = ID3.getAllTags(objectURL);
+                        if (tags) {
+                            var artist = tags.artist || "";
+                            var title = tags.title || "";
+                            var album = tags.album || "";
+                            var year = tags.year || "";
+                            var imagesrc = "image/default.png"; //Default image
+                            if ("picture" in tags) {
+                                var image = tags.picture;
+                                var base64String = "";
+                                for (var j = 0; j < image.data.length; j++) {
+                                    base64String += String.fromCharCode(image.data[j]);
+                                }
+                                imagesrc = "data:" + image.format + ";base64," + window.btoa(base64String);
+                            } else {
+                                //No image in ID3 tags, grab one from Deezer 
+                                //Log to console for debugging
+                                console.log("No album art found for track: " + title + ". Trying Deezer.");
+
+                                //Grab album art from deezer, deezerSearch is JSONP Callback
+                                _this.getAlbumArtFromDeezer(title, artist, album);
                             }
-                            imagesrc = "data:" + image.format + ";base64," + window.btoa(base64String);
+
+                            //Now output a new card
+                            _this.outputNewCard("track", "#tracks-container", title, artist, album, year, imagesrc, objectURL);
+                            
+                            //Resolve the deferred
+                            def.resolve();
+
                         } else {
-                            //No image in ID3 tags, grab one from Deezer 
-                            //Log to console for debugging
-                            console.log("No album art found for track: " + title + ". Trying Deezer.");
-
-                            //Grab album art from deezer, deezerSearch is JSONP Callback
-                            _this.getAlbumArtFromDeezer(title, artist, album);
+                            console.log("No tags for current track");
                         }
+                    }, {
+                        tags: ["artist", "title", "album", "year", "comment", "track", "genre", "lyrics", "picture"],
+                        dataReader: reader
+                    });
+                }
+            } //End for
+            
+            for(var p=0; p<_this.promises.length; p++) {
+                console.log("Promise state " + _this.promises[p].state());   
+            }
+            
+            $.when.apply($, _this.promises).done(afterTracksDone);
 
-                        //Now output a new card
-                        _this.outputNewCard("track", "#tracks-container", title, artist, album, year, imagesrc, objectURL);
+            function afterTracksDone() {
+                //Tracks have been added
+                //Now enable the play and queue links
+                console.log("Enabling play/queue links.");
+                _this.enablePlayAndQueueLinks();
 
-                        //Now enable the play and queue links
-                        //Has to go here as ID3.loadTags callback only executes when track is loaded
-                        //after loop has finished. 
-                        console.log("Enabling play/queue links.");
-                        _this.enablePlayAndQueueLinks();
-
-                        //Now populate other tabs
-                        console.log("Populating albums tab.");
-                        _this.populateAlbums();
-
-                    } else {
-                        console.log("No tags for current track");
-                    }
-                }, {
-                    tags: ["artist", "title", "album", "year", "comment", "track", "genre", "lyrics", "picture"],
-                    dataReader: reader
-                });
+                //Now populate other tabs
+                console.log("Populating albums tab.");
+                //_this.populateAlbums();
             }
         }
     };
+
 
     this.outputNewCard = function (type, container, title, artist, album, year, imagesrc, url) {
         if (type == "track") {
@@ -341,17 +368,12 @@ function LibraryManager() {
 
         $(".music-item .play-track").click(function (e) {
 
-            /*$(".sm2-playlist-bd").empty(); //Empty the existing playlist
-
-            //Append our track as a <li> element to playlist
-            $(".sm2-playlist-bd").append("<li class='selected'><a href='" + $(this).data("url") + "'><b>" + $(this).data("artist") + "</b> - " + $(this).data("title") + "</a></li>");*/
-
+            $("#playlist").empty(); //Empty the existing playlist
 
             $("#playlist").append("<li class='selected'><a href='" + $(this).data("url") + "'><b>" + $(this).data("artist") + "</b> - " + $(this).data("title") + "</a></li>");
 
-            var audio = document.getElementById('html5-audio');
-            $("#html5-audio").append("<source id='track1' src='' type='audio/mpeg'></source>");
-            var source = document.getElementById('track1');
+            var audio = $("#html5-audio")[0];
+            var source = $('#track1')[0];
             source.src = $(this).data("url");
 
             audio.load(); //call this to just preload the audio without playing
@@ -363,15 +385,17 @@ function LibraryManager() {
         });
 
         //Enable queue links
-        $(".music-item .queue-track").click(function () {
+        $(".music-item .queue-track").click(function (e) {
+
             $("#playlist").append("<li><a href='" + $(this).data("url") + "'><b>" + $(this).data("artist") + "</b> - " + $(this).data("title") + "</a></li>");
 
-            $("#html5-audio").append("<source id='track1' src='' type='audio/mpeg'></source>");
+            e.preventDefault();
+
+            return false;
 
         });
 
     }
-
 }
 
 /*
@@ -395,8 +419,8 @@ function deezerCallback(result) {
             var album = result.data[0].album.title;
 
             //Find the card corresponding to the response
-            $(".music-item").each(function() {
-                if( $(this).find(".track-artist").text() == artist && $(this).find(".track-album").text() == album ) {
+            $(".music-item").each(function () {
+                if ($(this).find(".track-artist").text() == artist && $(this).find(".track-album").text() == album) {
                     $(this).find(".card-image img").attr("src", imageSrc);
                 }
             });
@@ -405,6 +429,31 @@ function deezerCallback(result) {
     }
     //Cry.. we'll have to use a default picture
     else {
-        
+
     }
+}
+
+function PlaylistManager() {
+    var _this = this;
+    var currentTrackIndex = 0;
+
+    _this.init = function () {
+
+        //Listen for end of song, play next in queue when so
+        $("#html5-audio")[0].addEventListener("ended", function (e) {
+            _this.playNext();
+        });
+    };
+
+    _this.playNext = function () {
+
+        var audio = $("#html5-audio")[0];
+        var source = $('#track1')[0];
+        $("#playlist a:nth-child(1)").data
+        source.src = $("#playlist a:nth-child(" + currentTrackIndex + 1 + ")").data("url");
+
+        audio.load(); //call this to just preload the audio without playing
+        audio.play(); //call this to play the song right away
+    };
+
 }

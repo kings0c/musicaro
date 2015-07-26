@@ -79,49 +79,6 @@ $(document).ready(function () {
         else if ($(this).val() == 8) sortTracksByDuration("desc");
     });
 
-    //Enable nav refresh (update-library) button in nav bar
-    //Shows modal #update-library-modal with progress bar and info
-    $("nav #update-library").click(function () {
-        $('#update-library-modal').openModal();
-
-        //Listen for events from our php script so we can show progress
-        //http://www.htmlgoodies.com/beyond/php/show-progress-report-for-long-running-php-scripts.html
-        es = new EventSource('utils/update_library.php');
-
-        //a message is received
-        es.addEventListener('message', function (e) {
-            var result = JSON.parse(e.data);
-
-            $("#progress-status").text(result.message);
-
-            if (e.lastEventId == 'CLOSE') {
-                $("#progress-status").text(result.message);
-                es.close();
-                var pBar = document.getElementById('progressor');
-                pBar.value = pBar.max; //max out the progress bar
-                setTimeout(function () {
-
-                    //Display a toast
-                    Materialize.toast("Library update complete", 4000);
-
-                    //Close the modal
-                    $('#update-library-modal').closeModal();
-
-                    //Now grab the updated library via AJAX and output to screen
-                    $.ajax({
-                        url: "utils/get_tracks.php",
-                        method: "POST"
-                    }).done(function (html) {
-                        $("#tracks-container").html(html); //Load returned data into tracks (needs other tabs too)
-                    });
-                }, 3000);
-            } else {
-                var pBar = document.getElementById('progressor');
-                pBar.value = result.progress;
-            }
-        });
-    });
-
     //Enable nav search bar function
     $("nav form input").keyup(function () {
         var searchString = $(this).val().toLowerCase();
@@ -143,6 +100,19 @@ $(document).ready(function () {
     //Enable mobile side nav button
     $(".button-collapse").sideNav();
 
+    //Enable player control buttons
+    $("#player-controls .player-next").click(function (e) {
+        window.playlistManager.playNext();
+        e.preventDefault();
+        return false;
+    });
+
+    $("#player-controls .player-prev").click(function (e) {
+        window.playlistManager.playPrev();
+        e.preventDefault();
+        return false;
+    });
+
     //Start library manager
     window.libManager = new LibraryManager();
     window.libManager.init();
@@ -159,8 +129,8 @@ $(document).ready(function () {
  */
 
 function LibraryManager() {
+
     var _this = this;
-    var promises;
 
     //Check for File API support and bind to change event of <input type=file>
     this.init = function () {
@@ -170,42 +140,130 @@ function LibraryManager() {
         } else {
             $("#select-library-location-wrapper").html('The File APIs are not fully supported in this browser.');
         }
-        
-        this.promises = [];
+
+        this.promises = []; //Array for our promises
+        this.currentTrackIndex = 0; //Track number of tracks in library
+        this.currentArtistIndex = 0; //And artists
     };
 
-    this.getAlbumArtFromDeezer = function (title, artist, album) {
+    this.getAlbumArtFromDeezer = function (title, artist, album, ID) {
         var artistEncoded = escape(artist);
         var albumEncoded = escape(album);
         var titleEncoded = escape(title);
 
-        var albumEndpoint = "http://api.deezer.com/search?q=artist:%27" + artistEncoded + "%27%20album:%27" +
-            albumEncoded + "%27&limit=2&output=jsonp&callback=deezerCallback";
-
-        var titleEndpoint = "http://api.deezer.com/search?q=artist:%27" + artistEncoded + "%27%20title:%27" +
-            titleEncoded + "%27&limit=2&output=jsonp&callback=deezerCallback";
-
-        //Above is legacy, keep just incase changes
+        while (ID.toString().length < 5) {
+            ID = "0" + ID;
+        }
 
         //Request JSONP from Deezer
         $.ajax({
-            url: "http://api.deezer.com/search",
-            // The name of the callback parameter
-            jsonp: "deezerCallback",
+            url: "https://api.deezer.com/search",
+            // The name of the callback parameter as specified by Deezer
+            jsonp: "callback",
 
             // Tell jQuery we're expecting JSONP
             dataType: "jsonp",
 
             // Tell deezer what we want
             data: {
-                q: "artist:%27" + artistEncoded + "%27%20album:%27" + albumEncoded + "%27",
+                q: "artist:%27" + artistEncoded + "%27%20title:%27" + titleEncoded + "%27",
                 limit: "2",
                 output: "jsonp",
-                callback: "deezerCallback",
-                format: "json"
+                format: "json",
+                myID: ID
+            },
+            success: function (result) {
+                //A little lazy...
+                var _this = window.libManager;
+
+                function convertImgURLToBase64URL(url, callback) {
+                    var img = new Image();
+                    img.crossOrigin = 'Anonymous';
+                    img.onload = function () {
+                        var canvas = document.createElement('CANVAS'),
+                            ctx = canvas.getContext('2d'),
+                            dataURL;
+                        canvas.height = this.height;
+                        canvas.width = this.width;
+                        ctx.drawImage(this, 0, 0);
+                        dataURL = canvas.toDataURL("image/jpeg");
+                        callback(dataURL);
+                        canvas = null;
+                    };
+                    img.src = url;
+                }
+
+                //If Deezer brought us an album cover
+                if (result.total > 0) {
+                    var imageSrc = result.data[0].album.cover_medium;
+                    if (imageSrc) {
+
+                        var title = result.data[0].title;
+                        var artist = result.data[0].artist.name;
+                        var album = result.data[0].album.title;
+
+                        if (result.next) {
+                            var trackID = result.next.split("myID=")[1].substr(0, 5); //Extract the myID= we passed in our call. 5 digits front-padded with 0s
+                            trackID = parseInt(trackID);
+
+
+                            console.log("Deezer provided image: " + imageSrc + " for track ID " + trackID);
+
+                            //Find the card ID corresponding to the response
+                            $("#tracks-container .music-item").each(function () {
+                                if ($(this).data("id") == trackID) {
+                                    console.log("Updating container with track ID " + $(this).data("id"));
+                                    $(this).find(".card-image img")[0].src = imageSrc;
+
+                                    var $matchedCard = $(this);
+                                    /*convertImgURLToBase64URL(imageSrc, function (base64Img) {
+                                        $matchedCard.find(".card-image img")[0].src = base64Img;
+                                    });*/
+                                }
+                            });
+
+
+                        }
+                    }
+
+                }
+                //Cry.. we'll have to use a default picture
+                else {
+
+                }
             }
         });
-    }
+    };
+
+    this.getArtistArtFromDeezer = function (artist, title, ID) {
+        var artistEncoded = escape(artist);
+        var titleEncoded = escape(title);
+
+        while (ID.toString().length < 5) {
+            ID = "0" + ID;
+        }
+
+        //Request JSONP from Deezer
+        $.ajax({
+            url: "https://api.deezer.com/search",
+            // The name of the callback parameter
+            jsonp: "deezerArtistCallback",
+
+            // Tell jQuery we're expecting JSONP
+            dataType: "jsonp",
+
+            // Tell deezer what we want
+            data: {
+                q: "artist:%27" + artistEncoded + "%27&album:%27" + titleEncoded + "%27",
+                limit: "2",
+                output: "jsonp",
+                callback: "deezerArtistCallback",
+                format: "json",
+                strict: "on",
+                myID: ID
+            }
+        });
+    };
 
     //Event listener function, what to do with FileList passed by <input type=file>
     this.handleFileSelect = function (evt) {
@@ -217,7 +275,7 @@ function LibraryManager() {
 
         // files is a FileList of File objects. Iterate through each file
         // For each file that is an mp3, load the id3 tags and output a card
-        // After we've finished, enable the play/queue links and populate the other tabs
+        // After we've finished, enable the play/queue links
         //
         // ID3.loadTags is called async
         // We need to update play / queue after tracks are added
@@ -227,7 +285,7 @@ function LibraryManager() {
 
         function processFiles() {
             for (var i = 0; i < files.length; i++) {
-                
+
                 var f = files[i];
                 if (f.type == "audio/mp3") {
                     var reader = new FileAPIReader(f);
@@ -240,7 +298,7 @@ function LibraryManager() {
                     //Create a new deferred and place it on the promises stack.
                     var def = new $.Deferred();
                     _this.promises.push(def);
-                    
+
                     ID3.loadTags(objectURL, function () {
                         var tags = ID3.getAllTags(objectURL);
                         if (tags) {
@@ -259,15 +317,17 @@ function LibraryManager() {
                             } else {
                                 //No image in ID3 tags, grab one from Deezer 
                                 //Log to console for debugging
-                                console.log("No album art found for track: " + title + ". Trying Deezer.");
-
-                                //Grab album art from deezer, deezerSearch is JSONP Callback
-                                _this.getAlbumArtFromDeezer(title, artist, album);
+                                console.log("No album art found for track: " + title + " by " + artist + " in ID3 tags. Trying Deezer.");
                             }
 
                             //Now output a new card
-                            _this.outputNewCard("track", "#tracks-container", title, artist, album, year, imagesrc, objectURL);
-                            
+                            var cardID = _this.outputNewCard("track", "#tracks-container", title, artist, album, year, imagesrc, objectURL);
+
+                            if (!("picture" in tags)) {
+                                //Grab album art from deezer, deezerSearch is JSONP Callback
+                                _this.getAlbumArtFromDeezer(title, artist, album, cardID);
+                            }
+
                             //Resolve the deferred
                             def.resolve();
 
@@ -280,11 +340,11 @@ function LibraryManager() {
                     });
                 }
             } //End for
-            
-            for(var p=0; p<_this.promises.length; p++) {
-                console.log("Promise state " + _this.promises[p].state());   
+
+            for (var p = 0; p < _this.promises.length; p++) {
+                console.log("Promise state " + _this.promises[p].state());
             }
-            
+
             $.when.apply($, _this.promises).done(afterTracksDone);
 
             function afterTracksDone() {
@@ -295,7 +355,10 @@ function LibraryManager() {
 
                 //Now populate other tabs
                 console.log("Populating albums tab.");
-                //_this.populateAlbums();
+                _this.populateAlbums();
+
+                console.log("Populating artists tab.");
+                _this.populateArtists();
             }
         }
     };
@@ -303,21 +366,43 @@ function LibraryManager() {
 
     this.outputNewCard = function (type, container, title, artist, album, year, imagesrc, url) {
         if (type == "track") {
-            $(container).append("<div class='card hoverable music-item'>" +
+            $(container).append("<div class='card hoverable music-item' data-id='" + _this.currentTrackIndex + "'>" +
                 "<div class='card-image'>" +
                 "<img src='" + imagesrc + "'>" +
                 "</div>" +
                 "<div class='card-content'>" +
+                "<span class='track-duration right'>" + "</span>" +
                 "<span class='track-title'>" + title + "</span>" +
                 "<span class='track-artist'>" + artist + "</span>" +
                 "<span class='track-album'>" + album + "</span>" +
-                //"<span class='track-duration'>" + year + "</span>" +
+                "<audio class='track-audio'>" +
+                "<source class='track-source' type='audio/mpeg' src='" + url + "'></source>" +
+                "</audio>" +
                 "</div>" +
                 "<div class='card-action'>" +
-                "<a class='play-track' href='#' data-url='" + url + "' data-artist='" + artist + "' data-title='" + title + "'>Play</a>" +
-                "<a class='queue-track right' href='#' data-url='" + url + "' data-artist='" + artist + "' data-title='" + title + "'>Queue</a>" +
+                "<a class='play-track' href='#' data-url='" + url + "' data-artist='" + artist + "' data-title='" + title +
+                "'><i class='material-icons'>play_arrow</i></a>" +
+                "<a class='queue-track right' href='#' data-url='" + url + "' data-artist='" + artist + "' data-title='" + title +
+                "'><i class='material-icons'>queue_music</i></a>" +
                 "</div>" +
                 "</div>");
+
+            //Add an event listener so
+            //When the <audio> has loaded track metadata, display the duration
+            $(container).find(".music-item:last-child .track-audio").on("loadedmetadata", function (_event) {
+
+                var duration = Math.round($(this)[0].duration, 2);
+                var seconds = duration % 60;
+                var minutes = (duration - seconds) / 60;
+                if (seconds.toString().length < 2) {
+                    seconds = "0" + seconds;
+                }
+                var durationString = Math.round(minutes) + ":" + seconds;
+
+                $(this).parent().find(".track-duration").text(durationString);
+            });
+
+            return _this.currentTrackIndex++;
         } else if (type == "album") {
             $(container).append("<div class='card hoverable music-item'>" +
                 "<div class='card-image'>" +
@@ -330,12 +415,25 @@ function LibraryManager() {
                 //"<span class='track-duration'>" + year + "</span>" +
                 "</div>" +
                 "<div class='card-action'>" +
-                "<a class='play-track' href='#' data-url='" + url + "' data-artist='" + artist + "' data-title='" + title + "'>Play</a>" +
-                "<a class='queue-track right' href='#' data-url='" + url + "' data-artist='" + artist + "' data-title='" + title + "'>Queue</a>" +
+                "<a class='play-track' href='#' data-url='" + url + "' data-artist='" + artist + "' data-title='" + title + "'>Find Tracks</a>" +
                 "</div>" +
                 "</div>");
+        } else if (type == "artist") {
+            $(container).append("<div class='card hoverable music-item' data-id='" + _this.currentArtistIndex + "'>" +
+                "<div class='card-image'>" +
+                "<img src='" + imagesrc + "'>" +
+                "</div>" +
+                "<div class='card-content'>" +
+                "<span class='track-artist'>" + artist + "</span>" +
+                //"<span class='track-duration'>" + year + "</span>" +
+                "</div>" +
+                "<div class='card-action'>" +
+                "<a class='play-track' href='#'>Find Tracks</a>" +
+                "</div>" +
+                "</div>");
+            return _this.currentArtistIndex++;
         }
-    }
+    };
 
     /*
      *   Populate the albums tab
@@ -349,35 +447,52 @@ function LibraryManager() {
             var title = $(this).find(".track-title").text();
             var artist = $(this).find(".track-artist").text();
             var album = $(this).find(".track-album").text();
-            var year = $(this).find(".track-duration").text();
+            var duration = $(this).find(".track-duration").text();
             var url = $(this).find(".play-track").data("url");
             var imagesrc = $(this).find("img").attr("src");
 
             if (albumsSoFar.indexOf(album) == -1) {
                 albumsSoFar.push(album);
 
-                _this.outputNewCard("#albums-container", album, artist, "", year, imagesrc, url);
+                _this.outputNewCard("album", "#albums-container", album, artist, "", duration, imagesrc, url);
             } else {
-                console.log("Album already present.")
+                //console.log("Album already present.")
             }
         });
-    }
+    };
+
+    /*
+     *   Populate the artists tab
+     *   Looks through tracks tab and creates a new card in artist tab
+     *   For each unique artist
+     */
+    this.populateArtists = function () {
+        var artistsSoFar = [];
+
+        $("#tracks-container .music-item").each(function () {
+            var title = $(this).find(".track-title").text();
+            var artist = $(this).find(".track-artist").text();
+            var album = $(this).find(".track-album").text();
+            var duration = $(this).find(".track-duration").text();
+            var url = $(this).find(".play-track").data("url");
+            var imagesrc = $(this).find("img").attr("src");
+
+            if (artistsSoFar.indexOf(artist) == -1) {
+                artistsSoFar.push(artist);
+                var cardID = _this.outputNewCard("artist", "#artists-container", album, artist, "", duration, imagesrc, url);
+                _this.getArtistArtFromDeezer(artist, title, cardID);
+            } else {
+                //console.log("Artist already present.")
+            }
+        });
+    };
 
     //Enable play/queue links for each .music-item
     this.enablePlayAndQueueLinks = function () {
 
         $(".music-item .play-track").click(function (e) {
 
-            $("#playlist").empty(); //Empty the existing playlist
-
-            $("#playlist").append("<li class='selected'><a href='" + $(this).data("url") + "'><b>" + $(this).data("artist") + "</b> - " + $(this).data("title") + "</a></li>");
-
-            var audio = $("#html5-audio")[0];
-            var source = $('#track1')[0];
-            source.src = $(this).data("url");
-
-            audio.load(); //call this to just preload the audio without playing
-            audio.play(); //call this to play the song right away
+            window.playlistManager.playTrack($(this).data("url"), $(this).data("artist"), $(this).data("title"));
 
             e.preventDefault();
 
@@ -387,7 +502,7 @@ function LibraryManager() {
         //Enable queue links
         $(".music-item .queue-track").click(function (e) {
 
-            $("#playlist").append("<li><a href='" + $(this).data("url") + "'><b>" + $(this).data("artist") + "</b> - " + $(this).data("title") + "</a></li>");
+            window.playlistManager.queueTrack($(this).data("url"), $(this).data("artist"), $(this).data("title"));
 
             e.preventDefault();
 
@@ -395,23 +510,21 @@ function LibraryManager() {
 
         });
 
-    }
+    };
 }
 
 /*
  *   Callback from Deezer API JSONP request
  */
 
-function deezerCallback(result) {
 
+function deezerArtistCallback(result) { //Callback for artist API call
     //A little lazy...
     var _this = window.libManager;
 
-    console.log("Response from deezer");
-
     //If Deezer brought us an album cover
     if (result.total > 0) {
-        var imageSrc = result.data[0].album.cover_medium;
+        var imageSrc = result.data[0].artist.picture_medium;
         if (imageSrc) {
 
             var title = result.data[0].title;
@@ -419,11 +532,20 @@ function deezerCallback(result) {
             var album = result.data[0].album.title;
 
             //Find the card corresponding to the response
-            $(".music-item").each(function () {
-                if ($(this).find(".track-artist").text() == artist && $(this).find(".track-album").text() == album) {
-                    $(this).find(".card-image img").attr("src", imageSrc);
-                }
-            });
+            //and update it's <img src
+            if (result.next) {
+                var artistID = result.next.split("myID=")[1].substr(0, 5); //Extract the myID= we passed in our call. 5 digits front-padded with 0s
+                artistID = parseInt(artistID);
+
+                //Find the card ID corresponding to the response
+                $("#artists-container .music-item").each(function () {
+                    if ($(this).data("id") == artistID) {
+                        $(this).find(".card-image img").attr("src", imageSrc);
+                    }
+                });
+
+                console.log("Deezer provided image: " + imageSrc + " for artist ID " + artistID);
+            }
         }
 
     }
@@ -433,27 +555,69 @@ function deezerCallback(result) {
     }
 }
 
-function PlaylistManager() {
-    var _this = this;
-    var currentTrackIndex = 0;
 
-    _this.init = function () {
+function PlaylistManager() {
+
+    this.init = function () {
+
+        this._this = this;
+        this.currentTrackIndex = 0;
+
 
         //Listen for end of song, play next in queue when so
         $("#html5-audio")[0].addEventListener("ended", function (e) {
             _this.playNext();
         });
+
+
     };
 
-    _this.playNext = function () {
+    this.playTrack = function (url, artist, title) {
+        $("#playlist").empty(); //Empty the existing playlist
+
+        //Add a new li to the our playlist
+        $("#playlist").append("<li class='selected'><a href='" + url + "'><b>" + artist + "</b> - " + title + "</a></li>");
 
         var audio = $("#html5-audio")[0];
         var source = $('#track1')[0];
-        $("#playlist a:nth-child(1)").data
-        source.src = $("#playlist a:nth-child(" + currentTrackIndex + 1 + ")").data("url");
+        source.src = url;
+
+        audio.load(); //Load the track
+        audio.play(); //And play
+    }
+
+    this.queueTrack = function (url, artist, title) {
+        $("#playlist").append("<li><a href='" + url + "'><b>" + artist + "</b> - " + title + "</a></li>");
+    }
+
+    this.playNext = function () {
+
+        if (this.currentTrackIndex < $("#playlist li").length - 1) this.currentTrackIndex++;
+        else return false;
+
+        var audio = $("#html5-audio")[0];
+        var source = $('#track1')[0];
+        var trackURL = $("#playlist li:nth-child(" + (this.currentTrackIndex + 1) + ") a").attr("href");
+        source.src = trackURL;
+
+        audio.load(); //call this to just preload the audio without playing
+        audio.play(); //call this to play the song right away
+
+    };
+
+    this.playPrev = function () {
+
+        if (this.currentTrackIndex > 0) this.currentTrackIndex--;
+        else return false;
+
+        var audio = $("#html5-audio")[0];
+        var source = $('#track1')[0];
+        var trackURL = $("#playlist li:nth-child(" + (this.currentTrackIndex + 1) + ") a").attr("href");
+        source.src = trackURL;
 
         audio.load(); //call this to just preload the audio without playing
         audio.play(); //call this to play the song right away
     };
+
 
 }

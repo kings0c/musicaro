@@ -16,7 +16,34 @@
 <body>
 
     <nav>
-        <?php require("templates/top_bar.php"); ?>
+        <!--Begin templates/top_bar.php -->
+        <div class="nav-wrapper">
+            <a href="index.php" class="brand-logo">Musicaro</a>
+            <a href="#" data-activates="mobile-nav" class="button-collapse"><i class="material-icons">menu</i></a>
+            <ul class="right hide-on-med-and-down">
+                <li>
+                    <form class="input-field">
+                        <input id="search" type="search" required class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="Search Library">
+                        <label for="search"><i class="material-icons">search</i></label>
+                    </form>
+                </li>
+                <li><a id="update-library" class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="Add folder" href="#"><i class="material-icons">library_add</i></a></li>
+                <li><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="Settings" href="#"><i class="material-icons">settings</i></a></li>
+            </ul>
+            <ul class="side-nav light-blue darken-1" id="mobile-nav">
+                <li>
+                    <form>
+                        <div class="input-field">
+                            <input id="search" type="search" required class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="Search Library">
+                            <label for="search"><i class="material-icons">search</i></label>
+                        </div>
+                    </form>
+                </li>
+                <li><a id="update-library" class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="Add folder" href="#"><i class="material-icons">library_add</i></a></li>
+                <li><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="Settings" href="#"><i class="material-icons">settings</i></a></li>
+            </ul>
+        </div>
+        <!--End templates/top_bar.php -->
     </nav>
 
     <main>
@@ -51,22 +78,22 @@
 
         <div id="select-library-location-wrapper" class="row valign-wrapper">
             <div class="col s6 offset-s3 valign z-depth-3">
-                <h4>Your library is empty.</h4>
-                <p>Please select a folder containing music to add it.</p>
+                <h4>Your music library is empty.</h4>
+                <p>Add a folder.</p>
                 <input type="file" id="library-location" name="files[]" webkitdirectory directory multiple>
             </div>
         </div>
 
         <div id="tracks-container" class="music-container">
-            <?php //require("utils/get_tracks.php"); ?>
+
         </div>
 
         <div id="albums-container" class="music-container">
-            <?php //require("utils/get_albums.php"); ?>
+
         </div>
 
         <div id="artists-container" class="music-container">
-            <?php //require("utils/get_artists.php"); ?>
+
         </div>
 
         <div id="playlists-container" class="music-container">
@@ -78,6 +105,10 @@
                 <source id='track1' src='' type='audio/mpeg'></source>
             </audio>
             <div id="playlist"></div>
+            <div id="player-controls">
+                <a class="player-prev" href="#"><i class="small material-icons">skip_previous</i></a>
+                <a class="player-next" href="#"><i class="small material-icons">skip_next</i></a>
+            </div>
         </div>
 
         <noscript>
@@ -90,6 +121,7 @@
                             .music-container {
                                 display: none;
                             }
+
                         </style>
                     </div>
                 </div>
@@ -98,30 +130,9 @@
     </main>
 
     <footer>
-
     </footer>
 
-    <!-- Modal Structure -->
-    <div id="update-library-modal" class="modal">
-        <div class="modal-content">
-            <h4>Updating library</h4>
-            <br>
-            <br>
-            <p>This might take a few minutes...</p>
-            <br>
-            <div id="progress-wrapper">
-                <progress id='progressor' value="0" max='100' style=""></progress>
-                <span id="progress-status"></span>
-            </div>
-        </div>
-        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
-    </div>
-
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
-    <script>
-        window.jQuery || document.write('<script src="js/jquery.min.js">\x3C/script>')
-
-    </script>
+    <script src="js/jquery.min.js"></script>
     <script src="js/materialize.min.js"></script>
     <script src="js/id3-minimized.js"></script>
     <script src="js/main.js"></script>

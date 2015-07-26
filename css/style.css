@@ -1,9 +1,15 @@
 * {
     box-sizing: border-box;
 }
+
+nav, main, footer {
+    min-width: 600px;   
+}
+
 body {
     /* For audio player */
     padding-bottom: 42px;
+    
 }
 #noscript-warning {
     width: 100%;
@@ -96,8 +102,18 @@ nav .brand-logo {
 }
 
 #html5-audio {
+    height: 30px;
+    width: 300px;
     display: inline-block;
     margin-top: 6px; /* Change this to proper vertical center later */
+}
+
+#player-controls {
+    display: inline-block;
+}
+
+#player-controls a {
+    color: white;   
 }
 
 #update-library-modal .clear-loading {

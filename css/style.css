@@ -120,18 +120,3 @@ nav .brand-logo {
 #player-controls a {
     color: white;   
 }
-
-#update-library-modal .clear-loading {
-    margin-top: 60px;
-}
-#update-library-modal .modal-close {
-    position: absolute;
-    top: 0;
-    right: 0;
-}
-.modal-content {
-    text-align: center;
-}
-#progress-wrapper {
-    display: inline-block;
-}

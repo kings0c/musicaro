@@ -122,6 +122,120 @@ $(document).ready(function () {
     window.playlistManager.init();
 });
 
+/*
+ *   Music Track Class
+ *   
+ */
+
+function Track(trackID, title, artist, album, imagesrc, url) {
+    this.trackID = trackID;
+    this.title = title;
+    this.artist = artist;
+    this.album = album;
+    this.imagesrc = imagesrc;
+    this.url = url;
+    this.dom = {};
+}
+
+Track.prototype.displayCard = function () {
+    var container = "#tracks-container";
+
+    var element = $.parseHTML("<div class='card hoverable music-item' data-id='" + this.trackID + "'>" +
+        "<div class='card-image'>" +
+        "<img src='" + this.imagesrc + "'>" +
+        "</div>" +
+        "<div class='card-content'>" +
+        "<span class='track-duration right'>" + "</span>" +
+        "<span class='track-title'>" + this.title + "</span>" +
+        "<span class='track-artist'>" + this.artist + "</span>" +
+        "<span class='track-album'>" + this.album + "</span>" +
+        "<audio class='track-audio'>" +
+        "<source class='track-source' type='audio/mpeg' src='" + this.url + "'></source>" +
+        "</audio>" +
+        "</div>" +
+        "<div class='card-action'>" +
+        "<a class='play-track' href='#' data-url='" + this.url + "' data-artist='" + this.artist + "' data-title='" + this.title +
+        "'><i class='material-icons'>play_arrow</i></a>" +
+        "<a class='queue-track right' href='#' data-url='" + this.url + "' data-artist='" + this.artist + "' data-title='" + this.title +
+        "'><i class='material-icons'>queue_music</i></a>" +
+        "</div>" +
+        "</div>");
+    
+    this.dom = element;
+    
+    $(container).append(element);
+
+    //Add an event listener so
+    //When the <audio> has loaded track metadata, display the duration
+    $(container).find(".music-item:last-child .track-audio").on("loadedmetadata", function (_event) {
+
+        var duration = Math.round($(this)[0].duration, 2);
+        var seconds = duration % 60;
+        var minutes = (duration - seconds) / 60;
+        if (seconds.toString().length < 2) {
+            seconds = "0" + seconds;
+        }
+        var durationString = Math.round(minutes) + ":" + seconds;
+
+        $(this).parent().find(".track-duration").text(durationString);
+    });
+}
+
+Track.prototype.getAlbumArtFromDeezer = function () {
+    var artistEncoded = escape(this.artist);
+    var albumEncoded = escape(this.album);
+    var titleEncoded = escape(this.title);
+    var ID = this.trackID;
+    var _this = this;
+
+    while (ID.toString().length < 5) {
+        ID = "0" + ID;
+    }
+
+    //Request JSONP from Deezer
+    $.ajax({
+        url: "https://api.deezer.com/search",
+        // The name of the callback parameter as specified by Deezer
+        jsonp: "callback",
+
+        // Tell jQuery we're expecting JSONP
+        dataType: "jsonp",
+
+        // Tell deezer what we want
+        data: {
+            q: "artist:%27" + artistEncoded + "%27%20title:%27" + titleEncoded + "%27",
+            limit: "2",
+            output: "jsonp",
+            format: "json",
+            myID: ID
+        },
+        success: function (result) {
+            //The library manager object
+            var libManager = window.libManager;
+
+            //If Deezer brought us an album cover
+            if (result.total > 0) {
+                var imageSrc = result.data[0].album.cover_medium;
+                if (imageSrc) {
+
+                    if (result.next) { //Make sure all API call results actually have this (maybe not)
+
+                        console.log("Deezer provided image: " + imageSrc + " for track ID " + _this.trackID);
+
+                        //Update our card
+                        $(_this.dom).find(".card-image img")[0].src = imageSrc;
+                    }
+                }
+
+            }
+            //Cry.. we'll have to use a default picture
+            else {
+
+            }
+        }
+    });
+};
+
 /*   Library manager class.
  *   Check for File API support, if supported add a listener to the change event of browse button
  *   Then load ID3 tag reader, for each file object from browse
@@ -131,6 +245,9 @@ $(document).ready(function () {
 function LibraryManager() {
 
     var _this = this;
+    this.promises = []; //Array for our promises
+    this.currentTrackIndex = 0; //Track number of tracks in library
+    this.currentArtistIndex = 0; //And artists
 
     //Check for File API support and bind to change event of <input type=file>
     this.init = function () {
@@ -140,100 +257,9 @@ function LibraryManager() {
         } else {
             $("#select-library-location-wrapper").html('The File APIs are not fully supported in this browser.');
         }
-
-        this.promises = []; //Array for our promises
-        this.currentTrackIndex = 0; //Track number of tracks in library
-        this.currentArtistIndex = 0; //And artists
     };
 
-    this.getAlbumArtFromDeezer = function (title, artist, album, ID) {
-        var artistEncoded = escape(artist);
-        var albumEncoded = escape(album);
-        var titleEncoded = escape(title);
 
-        while (ID.toString().length < 5) {
-            ID = "0" + ID;
-        }
-
-        //Request JSONP from Deezer
-        $.ajax({
-            url: "https://api.deezer.com/search",
-            // The name of the callback parameter as specified by Deezer
-            jsonp: "callback",
-
-            // Tell jQuery we're expecting JSONP
-            dataType: "jsonp",
-
-            // Tell deezer what we want
-            data: {
-                q: "artist:%27" + artistEncoded + "%27%20title:%27" + titleEncoded + "%27",
-                limit: "2",
-                output: "jsonp",
-                format: "json",
-                myID: ID
-            },
-            success: function (result) {
-                //A little lazy...
-                var _this = window.libManager;
-
-                function convertImgURLToBase64URL(url, callback) {
-                    var img = new Image();
-                    img.crossOrigin = 'Anonymous';
-                    img.onload = function () {
-                        var canvas = document.createElement('CANVAS'),
-                            ctx = canvas.getContext('2d'),
-                            dataURL;
-                        canvas.height = this.height;
-                        canvas.width = this.width;
-                        ctx.drawImage(this, 0, 0);
-                        dataURL = canvas.toDataURL("image/jpeg");
-                        callback(dataURL);
-                        canvas = null;
-                    };
-                    img.src = url;
-                }
-
-                //If Deezer brought us an album cover
-                if (result.total > 0) {
-                    var imageSrc = result.data[0].album.cover_medium;
-                    if (imageSrc) {
-
-                        var title = result.data[0].title;
-                        var artist = result.data[0].artist.name;
-                        var album = result.data[0].album.title;
-
-                        if (result.next) {
-                            var trackID = result.next.split("myID=")[1].substr(0, 5); //Extract the myID= we passed in our call. 5 digits front-padded with 0s
-                            trackID = parseInt(trackID);
-
-
-                            console.log("Deezer provided image: " + imageSrc + " for track ID " + trackID);
-
-                            //Find the card ID corresponding to the response
-                            $("#tracks-container .music-item").each(function () {
-                                if ($(this).data("id") == trackID) {
-                                    console.log("Updating container with track ID " + $(this).data("id"));
-                                    $(this).find(".card-image img")[0].src = imageSrc;
-
-                                    var $matchedCard = $(this);
-                                    /*convertImgURLToBase64URL(imageSrc, function (base64Img) {
-                                        $matchedCard.find(".card-image img")[0].src = base64Img;
-                                    });*/
-                                }
-                            });
-
-
-                        }
-                    }
-
-                }
-                //Cry.. we'll have to use a default picture
-                else {
-
-                }
-            }
-        });
-    };
 
     this.getArtistArtFromDeezer = function (artist, title, ID) {
         var artistEncoded = escape(artist);
@@ -320,13 +346,16 @@ function LibraryManager() {
                                 console.log("No album art found for track: " + title + " by " + artist + " in ID3 tags. Trying Deezer.");
                             }
 
-                            //Now output a new card
-                            var cardID = _this.outputNewCard("track", "#tracks-container", title, artist, album, year, imagesrc, objectURL);
+                            //Now create a new Track object and display it
+                            var thisTrack = new Track(_this.currentTrackIndex, title, artist, album, imagesrc, objectURL);
+                            thisTrack.displayCard();
 
                             if (!("picture" in tags)) {
-                                //Grab album art from deezer, deezerSearch is JSONP Callback
-                                _this.getAlbumArtFromDeezer(title, artist, album, cardID);
+                                //Grab album art from deezer
+                                thisTrack.getAlbumArtFromDeezer();
                             }
+
+                            _this.currentTrackIndex++;
 
                             //Resolve the deferred
                             def.resolve();
@@ -362,7 +391,6 @@ function LibraryManager() {
             }
         }
     };
-
 
     this.outputNewCard = function (type, container, title, artist, album, year, imagesrc, url) {
         if (type == "track") {
@@ -511,6 +539,14 @@ function LibraryManager() {
         });
 
     };
+
+    this.saveLibrary = function () {
+        chrome.storage.local.set
+    };
+
+    this.loadLibrary = function () {
+
+    };
 }
 
 /*
@@ -618,6 +654,4 @@ function PlaylistManager() {
         audio.load(); //call this to just preload the audio without playing
         audio.play(); //call this to play the song right away
     };
-
-
 }

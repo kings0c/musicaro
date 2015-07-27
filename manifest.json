@@ -11,6 +11,7 @@
         "default_title": "Music player for Chrome."
     },
     "permissions": [
+    "storage",
     "activeTab",
     "https://ajax.googleapis.com/"
     ],

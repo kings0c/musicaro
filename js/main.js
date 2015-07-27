@@ -160,9 +160,9 @@ Track.prototype.displayCard = function () {
         "'><i class='material-icons'>queue_music</i></a>" +
         "</div>" +
         "</div>");
-    
+
     this.dom = element;
-    
+
     $(container).append(element);
 
     //Add an event listener so
@@ -179,7 +179,7 @@ Track.prototype.displayCard = function () {
 
         $(this).parent().find(".track-duration").text(durationString);
     });
-}
+};
 
 Track.prototype.getAlbumArtFromDeezer = function () {
     var artistEncoded = escape(this.artist);
@@ -223,17 +223,131 @@ Track.prototype.getAlbumArtFromDeezer = function () {
                         console.log("Deezer provided image: " + imageSrc + " for track ID " + _this.trackID);
 
                         //Update our card
-                        $(_this.dom).find(".card-image img")[0].src = imageSrc;
+                        $(_this.dom).find(".card-image img").attr("src", imageSrc);
+
+                        //And our class variable
+                        _this.imagesrc = imageSrc;
                     }
                 }
 
             }
-            //Cry.. we'll have to use a default picture
-            else {
-
-            }
         }
     });
+};
+
+/*
+ *   Music Artist Class
+ *   
+ */
+
+function Artist(artistID, artist, imagesrc) {
+    this.artistID = artistID;
+    this.artist = artist;
+    this.imagesrc = imagesrc;
+    this.dom = {};
+};
+
+Artist.prototype.displayCard = function () {
+    var container = "#artists-container";
+
+    var element = $.parseHTML("<div class='card hoverable music-item' data-id='" + this.artistID + "'>" +
+        "<div class='card-image'>" +
+        "<img src='" + this.imagesrc + "'>" +
+        "</div>" +
+        "<div class='card-content'>" +
+        "<span class='track-artist'>" + this.artist + "</span>" +
+        "</div>" +
+        "<div class='card-action'>" +
+        "<a class='play-track' href='#'>Find Tracks</a>" +
+        "</div>" +
+        "</div>");
+
+    this.dom = element;
+
+    $(container).append(element);
+};
+
+Artist.prototype.getArtistArtFromDeezer = function () {
+    var artistEncoded = escape(this.artist);
+    var ID = this.artistID;
+    var _this = this;
+
+    while (ID.toString().length < 5) {
+        ID = "0" + ID;
+    }
+
+    //Request JSONP from Deezer
+    $.ajax({
+        url: "https://api.deezer.com/search",
+        // The name of the callback parameter
+        jsonp: "callback",
+
+        // Tell jQuery we're expecting JSONP
+        dataType: "jsonp",
+
+        // Tell deezer what we want
+        data: {
+            q: "artist:%27" + artistEncoded + "%27",
+            limit: "2",
+            output: "jsonp",
+            format: "json",
+            strict: "on",
+            myID: ID
+        },
+        success: function (result) {
+            //A little lazy...
+            var libManager = window.libManager;
+
+            //If Deezer brought us an album cover
+            if (result.total > 0) {
+                var imageSrc = result.data[0].artist.picture_medium;
+                if (imageSrc) {
+                    console.log("Deezer provided image: " + imageSrc + " for artist ID " + _this.artistID);
+
+                    //Update our card
+                    $(_this.dom).find(".card-image img").attr("src", imageSrc);
+
+                    //And our class variable
+                    _this.imagesrc = imageSrc;
+                }
+            }
+
+        }
+    });
+};
+
+/*
+ *   Music Album Class
+ *   
+ */
+
+function Album(albumID, artist, album, imagesrc) {
+    this.albumID = albumID;
+    this.artist = artist;
+    this.album = album;
+    this.imagesrc = imagesrc;
+    this.dom = {};
+};
+
+Album.prototype.displayCard = function () {
+    var container = "#albums-container";
+
+    var element = $.parseHTML("<div class='card hoverable music-item'>" +
+        "<div class='card-image'>" +
+        "<img src='" + this.imagesrc + "'>" +
+        "</div>" +
+        "<div class='card-content'>" +
+        "<span class='track-artist'>" + this.artist + "</span>" +
+        "<span class='track-album'>" + this.album + "</span>" +
+        "</div>" +
+        "<div class='card-action'>" +
+        "<a class='play-album' href='#' data-url='" + this.url + "' data-artist='" + this.artist + "' data-title='" + this.title + "'>Find Tracks</a>" +
+        "</div>" +
+        "</div>");
+
+    this.dom = element;
+
+    $(container).append(element);
 };
 
 /*   Library manager class.
@@ -246,8 +360,10 @@ function LibraryManager() {
 
     var _this = this;
     this.promises = []; //Array for our promises
-    this.currentTrackIndex = 0; //Track number of tracks in library
-    this.currentArtistIndex = 0; //And artists
+
+    this.tracks = [];
+    this.albums = [];
+    this.artists = [];
 
     //Check for File API support and bind to change event of <input type=file>
     this.init = function () {
@@ -257,38 +373,6 @@ function LibraryManager() {
         } else {
             $("#select-library-location-wrapper").html('The File APIs are not fully supported in this browser.');
         }
-    };
-
-
-
-    this.getArtistArtFromDeezer = function (artist, title, ID) {
-        var artistEncoded = escape(artist);
-        var titleEncoded = escape(title);
-
-        while (ID.toString().length < 5) {
-            ID = "0" + ID;
-        }
-
-        //Request JSONP from Deezer
-        $.ajax({
-            url: "https://api.deezer.com/search",
-            // The name of the callback parameter
-            jsonp: "deezerArtistCallback",
-
-            // Tell jQuery we're expecting JSONP
-            dataType: "jsonp",
-
-            // Tell deezer what we want
-            data: {
-                q: "artist:%27" + artistEncoded + "%27&album:%27" + titleEncoded + "%27",
-                limit: "2",
-                output: "jsonp",
-                callback: "deezerArtistCallback",
-                format: "json",
-                strict: "on",
-                myID: ID
-            }
-        });
     };
 
     //Event listener function, what to do with FileList passed by <input type=file>
@@ -305,161 +389,84 @@ function LibraryManager() {
         //
         // ID3.loadTags is called async
         // We need to update play / queue after tracks are added
-        // So use promises
+        // So use deferred/promises
 
-        processFiles();
+        for (var i = 0; i < files.length; i++) {
 
-        function processFiles() {
-            for (var i = 0; i < files.length; i++) {
+            var f = files[i];
+            if (f.type == "audio/mp3") {
+                var reader = new FileAPIReader(f);
+                var url = f.urn || f.name;
+                var objectURL = window.URL.createObjectURL(f);
+                getTagsFromFile(f, reader, objectURL);
+            }
 
-                var f = files[i];
-                if (f.type == "audio/mp3") {
-                    var reader = new FileAPIReader(f);
-                    var url = f.urn || f.name;
-                    var objectURL = window.URL.createObjectURL(f);
-                    getTagsFromFile(f, reader, objectURL);
-                }
+            function getTagsFromFile(f, reader, objectURL) {
+                //Create a new deferred and place it on the promises stack.
+                var def = new $.Deferred();
+                _this.promises.push(def);
 
-                function getTagsFromFile(f, reader, objectURL) {
-                    //Create a new deferred and place it on the promises stack.
-                    var def = new $.Deferred();
-                    _this.promises.push(def);
-
-                    ID3.loadTags(objectURL, function () {
-                        var tags = ID3.getAllTags(objectURL);
-                        if (tags) {
-                            var artist = tags.artist || "";
-                            var title = tags.title || "";
-                            var album = tags.album || "";
-                            var year = tags.year || "";
-                            var imagesrc = "image/default.png"; //Default image
-                            if ("picture" in tags) {
-                                var image = tags.picture;
-                                var base64String = "";
-                                for (var j = 0; j < image.data.length; j++) {
-                                    base64String += String.fromCharCode(image.data[j]);
-                                }
-                                imagesrc = "data:" + image.format + ";base64," + window.btoa(base64String);
-                            } else {
-                                //No image in ID3 tags, grab one from Deezer 
-                                //Log to console for debugging
-                                console.log("No album art found for track: " + title + " by " + artist + " in ID3 tags. Trying Deezer.");
+                ID3.loadTags(objectURL, function () {
+                    var tags = ID3.getAllTags(objectURL);
+                    if (tags) {
+                        var artist = tags.artist || "Unknown";
+                        var title = tags.title || "Unknown";
+                        var album = tags.album || "Unknown";
+                        var imagesrc = "image/default.png"; //Default image
+                        if ("picture" in tags) {
+                            var image = tags.picture;
+                            var base64String = "";
+                            for (var j = 0; j < image.data.length; j++) {
+                                base64String += String.fromCharCode(image.data[j]);
                             }
-
-                            //Now create a new Track object and display it
-                            var thisTrack = new Track(_this.currentTrackIndex, title, artist, album, imagesrc, objectURL);
-                            thisTrack.displayCard();
-
-                            if (!("picture" in tags)) {
-                                //Grab album art from deezer
-                                thisTrack.getAlbumArtFromDeezer();
-                            }
-
-                            _this.currentTrackIndex++;
-
-                            //Resolve the deferred
-                            def.resolve();
-
+                            imagesrc = "data:" + image.format + ";base64," + window.btoa(base64String);
                         } else {
-                            console.log("No tags for current track");
+                            //No image in ID3 tags, grab one from Deezer 
+                            //Log to console for debugging
+                            console.log("No album art found for track: " + title + " by " + artist + " in ID3 tags. Trying Deezer.");
                         }
-                    }, {
-                        tags: ["artist", "title", "album", "year", "comment", "track", "genre", "lyrics", "picture"],
-                        dataReader: reader
-                    });
-                }
-            } //End for
 
-            for (var p = 0; p < _this.promises.length; p++) {
-                console.log("Promise state " + _this.promises[p].state());
+                        //Now create a new Track object and display it
+                        var newTrack = new Track(_this.tracks.length, title, artist, album, imagesrc, objectURL);
+                        _this.tracks.push(newTrack);
+                        newTrack.displayCard();
+
+                        if (!("picture" in tags)) {
+                            //Grab album art from deezer
+                            newTrack.getAlbumArtFromDeezer();
+                        }
+
+                        //Resolve the deferred
+                        def.resolve();
+
+                    } else {
+                        console.log("No tags for current track");
+                    }
+                }, {
+                    tags: ["artist", "title", "album", "year", "comment", "track", "genre", "lyrics", "picture"],
+                    dataReader: reader
+                });
             }
+        } //End for
 
-            $.when.apply($, _this.promises).done(afterTracksDone);
-
-            function afterTracksDone() {
-                //Tracks have been added
-                //Now enable the play and queue links
-                console.log("Enabling play/queue links.");
-                _this.enablePlayAndQueueLinks();
-
-                //Now populate other tabs
-                console.log("Populating albums tab.");
-                _this.populateAlbums();
-
-                console.log("Populating artists tab.");
-                _this.populateArtists();
-            }
+        for (var p = 0; p < _this.promises.length; p++) {
+            console.log("Promise state " + _this.promises[p].state());
         }
-    };
 
-    this.outputNewCard = function (type, container, title, artist, album, year, imagesrc, url) {
-        if (type == "track") {
-            $(container).append("<div class='card hoverable music-item' data-id='" + _this.currentTrackIndex + "'>" +
-                "<div class='card-image'>" +
-                "<img src='" + imagesrc + "'>" +
-                "</div>" +
-                "<div class='card-content'>" +
-                "<span class='track-duration right'>" + "</span>" +
-                "<span class='track-title'>" + title + "</span>" +
-                "<span class='track-artist'>" + artist + "</span>" +
-                "<span class='track-album'>" + album + "</span>" +
-                "<audio class='track-audio'>" +
-                "<source class='track-source' type='audio/mpeg' src='" + url + "'></source>" +
-                "</audio>" +
-                "</div>" +
-                "<div class='card-action'>" +
-                "<a class='play-track' href='#' data-url='" + url + "' data-artist='" + artist + "' data-title='" + title +
-                "'><i class='material-icons'>play_arrow</i></a>" +
-                "<a class='queue-track right' href='#' data-url='" + url + "' data-artist='" + artist + "' data-title='" + title +
-                "'><i class='material-icons'>queue_music</i></a>" +
-                "</div>" +
-                "</div>");
+        $.when.apply($, _this.promises).done(afterTracksDone);
 
-            //Add an event listener so
-            //When the <audio> has loaded track metadata, display the duration
-            $(container).find(".music-item:last-child .track-audio").on("loadedmetadata", function (_event) {
+        function afterTracksDone() {
+            //Tracks have been added
+            //Now enable the play and queue links
+            console.log("Enabling play/queue links.");
+            _this.enablePlayAndQueueLinks();
 
-                var duration = Math.round($(this)[0].duration, 2);
-                var seconds = duration % 60;
-                var minutes = (duration - seconds) / 60;
-                if (seconds.toString().length < 2) {
-                    seconds = "0" + seconds;
-                }
-                var durationString = Math.round(minutes) + ":" + seconds;
+            //Now populate other tabs
+            console.log("Populating albums tab.");
+            _this.populateAlbums();
 
-                $(this).parent().find(".track-duration").text(durationString);
-            });
-
-            return _this.currentTrackIndex++;
-        } else if (type == "album") {
-            $(container).append("<div class='card hoverable music-item'>" +
-                "<div class='card-image'>" +
-                "<img src='" + imagesrc + "'>" +
-                "</div>" +
-                "<div class='card-content'>" +
-                "<span class='track-title'>" + title + "</span>" +
-                "<span class='track-artist'>" + artist + "</span>" +
-                "<span class='track-album'>" + album + "</span>" +
-                //"<span class='track-duration'>" + year + "</span>" +
-                "</div>" +
-                "<div class='card-action'>" +
-                "<a class='play-track' href='#' data-url='" + url + "' data-artist='" + artist + "' data-title='" + title + "'>Find Tracks</a>" +
-                "</div>" +
-                "</div>");
-        } else if (type == "artist") {
-            $(container).append("<div class='card hoverable music-item' data-id='" + _this.currentArtistIndex + "'>" +
-                "<div class='card-image'>" +
-                "<img src='" + imagesrc + "'>" +
-                "</div>" +
-                "<div class='card-content'>" +
-                "<span class='track-artist'>" + artist + "</span>" +
-                //"<span class='track-duration'>" + year + "</span>" +
-                "</div>" +
-                "<div class='card-action'>" +
-                "<a class='play-track' href='#'>Find Tracks</a>" +
-                "</div>" +
-                "</div>");
-            return _this.currentArtistIndex++;
+            console.log("Populating artists tab.");
+            _this.populateArtists();
         }
     };
 
@@ -469,24 +476,17 @@ function LibraryManager() {
      *   For each unique album
      */
     this.populateAlbums = function () {
-        var albumsSoFar = [];
+        for (var i in this.tracks) {
+            var track = this.tracks[i];
 
-        $("#tracks-container .music-item").each(function () {
-            var title = $(this).find(".track-title").text();
-            var artist = $(this).find(".track-artist").text();
-            var album = $(this).find(".track-album").text();
-            var duration = $(this).find(".track-duration").text();
-            var url = $(this).find(".play-track").data("url");
-            var imagesrc = $(this).find("img").attr("src");
+            if (this.albums.indexOf(track.album) == -1) { //If artist is new, add it to our list
+                this.albums.push(track.album);
 
-            if (albumsSoFar.indexOf(album) == -1) {
-                albumsSoFar.push(album);
-
-                _this.outputNewCard("album", "#albums-container", album, artist, "", duration, imagesrc, url);
-            } else {
-                //console.log("Album already present.")
+                var newAlbum = new Album(this.albums.length - 1, track.artist, track.album, track.imagesrc);
+                this.artists.push(newAlbum);
+                newAlbum.displayCard();
             }
-        });
+        }
     };
 
     /*
@@ -495,24 +495,18 @@ function LibraryManager() {
      *   For each unique artist
      */
     this.populateArtists = function () {
-        var artistsSoFar = [];
+        for (var i in this.tracks) {
+            var track = this.tracks[i];
 
-        $("#tracks-container .music-item").each(function () {
-            var title = $(this).find(".track-title").text();
-            var artist = $(this).find(".track-artist").text();
-            var album = $(this).find(".track-album").text();
-            var duration = $(this).find(".track-duration").text();
-            var url = $(this).find(".play-track").data("url");
-            var imagesrc = $(this).find("img").attr("src");
+            if (this.artists.indexOf(track.artist) == -1) { //If artist is new, add it to our list
+                this.artists.push(track.artist);
 
-            if (artistsSoFar.indexOf(artist) == -1) {
-                artistsSoFar.push(artist);
-                var cardID = _this.outputNewCard("artist", "#artists-container", album, artist, "", duration, imagesrc, url);
-                _this.getArtistArtFromDeezer(artist, title, cardID);
-            } else {
-                //console.log("Artist already present.")
+                var newArtist = new Artist(this.artists.length - 1, track.artist, track.imagesrc);
+                this.artists.push(newArtist);
+                newArtist.displayCard();
+                newArtist.getArtistArtFromDeezer();
             }
-        });
+        }
     };
 
     //Enable play/queue links for each .music-item
@@ -548,49 +542,6 @@ function LibraryManager() {
 
     };
 }
-
-/*
- *   Callback from Deezer API JSONP request
- */
-
-
-function deezerArtistCallback(result) { //Callback for artist API call
-    //A little lazy...
-    var _this = window.libManager;
-
-    //If Deezer brought us an album cover
-    if (result.total > 0) {
-        var imageSrc = result.data[0].artist.picture_medium;
-        if (imageSrc) {
-
-            var title = result.data[0].title;
-            var artist = result.data[0].artist.name;
-            var album = result.data[0].album.title;
-
-            //Find the card corresponding to the response
-            //and update it's <img src
-            if (result.next) {
-                var artistID = result.next.split("myID=")[1].substr(0, 5); //Extract the myID= we passed in our call. 5 digits front-padded with 0s
-                artistID = parseInt(artistID);
-
-                //Find the card ID corresponding to the response
-                $("#artists-container .music-item").each(function () {
-                    if ($(this).data("id") == artistID) {
-                        $(this).find(".card-image img").attr("src", imageSrc);
-                    }
-                });
-
-                console.log("Deezer provided image: " + imageSrc + " for artist ID " + artistID);
-            }
-        }
-
-    }
-    //Cry.. we'll have to use a default picture
-    else {
-
-    }
-}
-
 
 function PlaylistManager() {
 

@@ -64,55 +64,6 @@ function sortTracksByDuration(order) {
 
 $(document).ready(function () {
 
-    //Enable sort by dropdown
-
-    //***Could probably change this to call correct function by slicing up the dropdown value
-    // Likely a waste of time while there's so few options
-    $("#sort-by").change(function () {
-        if ($(this).val() == 1) sortTracksBy("title", "asc");
-        else if ($(this).val() == 2) sortTracksBy("title", "desc");
-        else if ($(this).val() == 3) sortTracksBy("artist", "asc");
-        else if ($(this).val() == 4) sortTracksBy("artist", "desc");
-        else if ($(this).val() == 5) sortTracksBy("album", "asc");
-        else if ($(this).val() == 6) sortTracksBy("album", "desc");
-        else if ($(this).val() == 7) sortTracksByDuration("asc");
-        else if ($(this).val() == 8) sortTracksByDuration("desc");
-    });
-
-    //Enable nav search bar function
-    $("nav form input").keyup(function () {
-        var searchString = $(this).val().toLowerCase();
-
-        //Remove any .music-item where title album or artist does not match search string
-        $(".music-item").each(function () {
-            var myTitle = $(this).find(".track-title").text().toLowerCase();
-            var myArtist = $(this).find(".track-artist").text().toLowerCase();
-            var myAlbum = $(this).find(".track-album").text().toLowerCase();
-
-            $(this).css("display", "none");
-
-            if (myTitle.indexOf(searchString) != -1 || myArtist.indexOf(searchString) != -1 || myAlbum.indexOf(searchString) != -1) {
-                $(this).css("display", "inline-block");
-            }
-        });
-    });
-
-    //Enable mobile side nav button
-    $(".button-collapse").sideNav();
-
-    //Enable player control buttons
-    $("#player-controls .player-next").click(function (e) {
-        window.playlistManager.playNext();
-        e.preventDefault();
-        return false;
-    });
-
-    $("#player-controls .player-prev").click(function (e) {
-        window.playlistManager.playPrev();
-        e.preventDefault();
-        return false;
-    });
-
     //Start library manager
     window.libManager = new LibraryManager();
     window.libManager.init();
@@ -120,6 +71,7 @@ $(document).ready(function () {
     //Start playlist manager.
     window.playlistManager = new PlaylistManager();
     window.playlistManager.init();
+    
 });
 
 /*
@@ -376,8 +328,8 @@ function LibraryManager() {
     };
 
     //Event listener function, what to do with FileList passed by <input type=file>
-    this.handleFileSelect = function (evt) {
-        var files = evt.target.files; // FileList object
+    this.handleFileSelect = function (files) {
+        //var files = evt.target.files; // FileList object
 
         //Hide the select folder dialog
         //**TODO** make this a bit prettier
@@ -457,9 +409,6 @@ function LibraryManager() {
 
         function afterTracksDone() {
             //Tracks have been added
-            //Now enable the play and queue links
-            console.log("Enabling play/queue links.");
-            _this.enablePlayAndQueueLinks();
 
             //Now populate other tabs
             console.log("Populating albums tab.");
@@ -467,6 +416,10 @@ function LibraryManager() {
 
             console.log("Populating artists tab.");
             _this.populateArtists();
+            
+            //Now trigger refresh on popup
+            console.log("Refreshing popup view");
+            chrome.extension.getViews()[1].bgInterface.getTracks();
         }
     };
 
@@ -509,33 +462,8 @@ function LibraryManager() {
         }
     };
 
-    //Enable play/queue links for each .music-item
-    this.enablePlayAndQueueLinks = function () {
-
-        $(".music-item .play-track").click(function (e) {
-
-            window.playlistManager.playTrack($(this).data("url"), $(this).data("artist"), $(this).data("title"));
-
-            e.preventDefault();
-
-            return false;
-        });
-
-        //Enable queue links
-        $(".music-item .queue-track").click(function (e) {
-
-            window.playlistManager.queueTrack($(this).data("url"), $(this).data("artist"), $(this).data("title"));
-
-            e.preventDefault();
-
-            return false;
-
-        });
-
-    };
-
     this.saveLibrary = function () {
-        chrome.storage.local.set
+        
     };
 
     this.loadLibrary = function () {
@@ -544,19 +472,45 @@ function LibraryManager() {
 }
 
 function PlaylistManager() {
+    
+    var _this = this;
+    
+    this.player = null;
+    this.currentTrack = null;
+    this.currentTrackIndex = null;
+    this.currentTime = null;
+    this.isPlaying = false;
 
     this.init = function () {
-
-        this._this = this;
+        this.player = $("#html5-audio")[0];
         this.currentTrackIndex = 0;
-
+        
+        //Listen for start of playing, set isPlaying
+        $("#html5-audio")[0].addEventListener("playing", function (e) {
+            _this.isPlaying = true;
+        });
+        
+        //Listen for pause, set isPlaying
+        $("#html5-audio")[0].addEventListener("pause", function (e) {
+            _this.isPlaying = false;
+        });
 
         //Listen for end of song, play next in queue when so
         $("#html5-audio")[0].addEventListener("ended", function (e) {
+            _this.isPlaying = false;
             _this.playNext();
+        });
+        
+        //Listen for time change and update our currentTime
+        $("#html5-audio")[0].addEventListener("timeupdate", function (e) {
+            _this.currentTime = e.target.currentTime;
         });
 
 
+    };
+    
+    this.getCurrentTime = function() {
+        
     };
 
     this.playTrack = function (url, artist, title) {
@@ -571,11 +525,11 @@ function PlaylistManager() {
 
         audio.load(); //Load the track
         audio.play(); //And play
-    }
+    };
 
     this.queueTrack = function (url, artist, title) {
         $("#playlist").append("<li><a href='" + url + "'><b>" + artist + "</b> - " + title + "</a></li>");
-    }
+    };
 
     this.playNext = function () {
 

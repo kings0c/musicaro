@@ -18,8 +18,11 @@
     <nav>
         <!--Begin templates/top_bar.php -->
         <div class="nav-wrapper">
-            <a href="index.php" class="left"><h1>Musicaro</h1></a>
+            <a href="index.php" class="left logo"><h1>Musicaro</h1></a>
             <ul class="right">
+                <li>
+                    <a href="#" class="swap-pages"><i class="material-icons">swap_calls</i></a>
+                </li>
                 <li>
                     <form class="input-field">
                         <input id="search" type="search" required class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="Search Library">
@@ -64,8 +67,18 @@
         <div id="select-library-location-wrapper" class="row valign-wrapper">
             <div class="col s6 offset-s3 valign z-depth-3">
                 <h4>Your music library is empty.</h4>
-                <p>Add a folder containing music to start.</p>
+                <p class="library-instructions">Add a folder containing music to start.</p>
                 <input type="file" id="library-location" name="files[]" webkitdirectory directory multiple>
+                <div id="circularG" class="ajax-spinner">
+                    <div id="circularG_1" class="circularG"></div>
+                    <div id="circularG_2" class="circularG"></div>
+                    <div id="circularG_3" class="circularG"></div>
+                    <div id="circularG_4" class="circularG"></div>
+                    <div id="circularG_5" class="circularG"></div>
+                    <div id="circularG_6" class="circularG"></div>
+                    <div id="circularG_7" class="circularG"></div>
+                    <div id="circularG_8" class="circularG"></div>
+                </div>
             </div>
         </div>
 
@@ -120,7 +133,7 @@
     <script src="js/jquery.min.js"></script>
     <script src="js/materialize.min.js"></script>
     <script src="js/id3-minimized.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/popup.js"></script>
 </body>
 
 </html>

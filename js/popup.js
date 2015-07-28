@@ -1,3 +1,8 @@
+/*  JS File for popup.htm
+*   Runs popup front-end process for chrome extension
+*   talks to the managers in main.js (LibraryManager, PlaylistManager)
+*/
+
 //Sort tracks given param and order
 //Param can be one of title / artists / album
 //Order must be either "asc" or "desc"
@@ -96,24 +101,38 @@ $(document).ready(function () {
             }
         });
     });
-    
+
     var bgPage = chrome.extension.getBackgroundPage();
 
     //Enable player control buttons
+    //Next
     $("#player-controls .player-next").click(function (e) {
         bgPage.playlistManager.playNext();
         e.preventDefault();
         return false;
     });
-
+    //Prev
     $("#player-controls .player-prev").click(function (e) {
         bgPage.playlistManager.playPrev();
         e.preventDefault();
         return false;
     });
+    //PlayPause
+    $("#player-controls .player-playpause").click(function (e) {
+        if (bgPage.playlistManager.isPlaying) {
+            bgPage.playlistManager.pause();
+            $("#player-controls .player-playpause").html('<i class="small material-icons">play_arrow</i>');
+        } else {
+            bgPage.playlistManager.play();
+            $("#player-controls .player-playpause").html('<i class="small material-icons">pause</i>');
+        }
+        e.preventDefault();
+        return false;
+    });
 
-    $(".swap-pages").click(function () {
-        window.location.href = "background.htm";
+    //Nav add folder button
+    $("#library-add-folder").click(function () {
+        $("#select-library-location-wrapper").show(0);
     });
 
     //Enable file select
@@ -125,7 +144,7 @@ $(document).ready(function () {
     }
 
     window.bgInterface = new BackgroundInterface();
-    bgInterface.getTracks();
+    bgInterface.getTracks();    //Get any already existing tracks from the background
 });
 
 function fileSelectHandler(evt) {
@@ -134,21 +153,22 @@ function fileSelectHandler(evt) {
     var backgroundPage = chrome.extension.getBackgroundPage();
 
     backgroundPage.libManager.handleFileSelect(files);
-    
+
     $("#library-location").remove();
     $(".library-instructions").text("Loading files. This may take a few minutes...");
     $(".ajax-spinner").show(0);
 }
 
 /*  Object to interface with background page
-*
-*
-*/
+ *
+ *
+ */
 
 function BackgroundInterface() {
     var _this = this;
     this.backgroundPage = chrome.extension.getBackgroundPage();
-    
+    this.currentTrack = null;
+
     this.getTracks = function () {
         var backgroundPage = this.backgroundPage;
 
@@ -158,7 +178,7 @@ function BackgroundInterface() {
             $("#tracks-container").html($(backgroundPage.document.body).find("#tracks-container").html());
             $("#artists-container").html($(backgroundPage.document.body).find("#artists-container").html());
             $("#albums-container").html($(backgroundPage.document.body).find("#albums-container").html());
-            
+
             _this.enablePlayAndQueueLinks();
         }
     }
@@ -167,24 +187,69 @@ function BackgroundInterface() {
     this.enablePlayAndQueueLinks = function () {
 
         $(".music-item .play-track").click(function (e) {
+            var trackID = $(this).parent().parent().data("id");
+            //If this track is already playing (the icon is pause not play)
+            if ($(this).find("i").text() == 'pause') {
+                chrome.extension.getBackgroundPage().playlistManager.pause();
+            } else {
 
-            chrome.extension.getBackgroundPage().playlistManager.playTrack($(this).data("url"), $(this).data("artist"), $(this).data("title"));
-
+                //Tell the playlist manager in the BG page to play the track
+                chrome.extension.getBackgroundPage().playlistManager.playTrack($(this).data("url"),
+                    $(this).data("artist"), $(this).data("title"), trackID);
+            }
             e.preventDefault();
 
             return false;
+
         });
 
         //Enable queue links
         $(".music-item .queue-track").click(function (e) {
+            var trackID = $(this).parent().parent().data("id");
 
-            chrome.extension.getBackgroundPage().playlistManager.queueTrack($(this).data("url"), $(this).data("artist"), $(this).data("title"));
+            //Tell the playlist manager in the BG page to queue the track
+            chrome.extension.getBackgroundPage().playlistManager.queueTrack($(this).data("url"),
+                $(this).data("artist"), $(this).data("title"), trackID);
 
             e.preventDefault();
 
             return false;
 
         });
+    };
 
+    this.startedPlaying = function (trackid) {
+
+        //Set current track var
+        _this.currentTrack = trackid;
+
+        //Change the currently playing tracks play button in card to pause
+        $(".music-item").each(function (e) {
+            if ($(this).data("id") == trackid) {
+                $(this).find(".play-track i").text('pause');
+            } else {
+                $(this).find(".play-track i").text('play_arrow');
+            }
+        });
+
+        //Change player play/pause icon
+        $("#player-controls .player-playpause i").text('pause');
+    };
+
+    this.paused = function () {
+        //Change every card's button to the play icon
+        $(".music-item").each(function (e) {
+            $(this).find(".play-track i").text('play_arrow');
+        });
+
+        //Change player play/pause icon
+        $("#player-controls .player-playpause i").text('play_arrow');
+    };
+    
+    this.updateTime = function(time, maxTime) {
+        if(maxTime) { //Make sure maxTime isn't null, possible if track metadata isn't available yet
+            var percentage = Math.floor((time / maxTime) * 100);
+            $(".player-position").val(percentage);
+        }
     };
 }

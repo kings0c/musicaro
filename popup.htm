@@ -16,12 +16,11 @@
 <body>
 
     <nav>
-        <!--Begin templates/top_bar.php -->
         <div class="nav-wrapper">
             <a href="index.php" class="left logo"><h1>Musicaro</h1></a>
             <ul class="right">
                 <li>
-                    <a href="#" class="swap-pages"><i class="material-icons">swap_calls</i></a>
+                    <!--<a href="#" id="library-add-folder"><i class="material-icons">library_add</i></a>-->
                 </li>
                 <li>
                     <form class="input-field">
@@ -31,7 +30,6 @@
                 </li>
             </ul>
         </div>
-        <!--End templates/top_bar.php -->
     </nav>
 
     <main>
@@ -67,8 +65,10 @@
         <div id="select-library-location-wrapper" class="row valign-wrapper">
             <div class="col s6 offset-s3 valign z-depth-3">
                 <h4>Your music library is empty.</h4>
-                <p class="library-instructions">Add a folder containing music to start.</p>
+                <p class="library-instructions">Select a folder containing music to add it to your library.</p>
                 <input type="file" id="library-location" name="files[]" webkitdirectory directory multiple>
+                
+                <!--AJAX Loading Spinner-->
                 <div id="circularG" class="ajax-spinner">
                     <div id="circularG_1" class="circularG"></div>
                     <div id="circularG_2" class="circularG"></div>
@@ -99,11 +99,11 @@
         </div>
 
         <div id="audio-player" class="">
-            <audio id="html5-audio" controls>
-                <source id='track1' src='' type='audio/mpeg'></source>
-            </audio>
-            <div id="playlist"></div>
             <div id="player-controls">
+                <a class="player-playpause" href="#"><i class="small material-icons">play_arrow</i></a>
+                <p class="range-field">
+                    <input class="player-position" type="range" id="test5" min="0" max="100" value="0">
+                </p>
                 <a class="player-prev" href="#"><i class="small material-icons">skip_previous</i></a>
                 <a class="player-next" href="#"><i class="small material-icons">skip_next</i></a>
             </div>

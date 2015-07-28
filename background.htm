@@ -15,62 +15,7 @@
 
 <body>
 
-    <nav>
-        <!--Begin templates/top_bar.php -->
-        <div class="nav-wrapper">
-            <a href="index.php" class="left logo"><h1>Musicaro BG</h1></a>
-            <ul class="right">
-                <li>
-                    <a href="#" class="swap-pages"><i class="material-icons">swap_calls</i></a>
-                </li>
-                <li>
-                    <form class="input-field">
-                        <input id="search" type="search" required class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="Search Library">
-                        <label for="search"><i class="material-icons">search</i></label>
-                    </form>
-                </li>
-            </ul>
-        </div>
-        <!--End templates/top_bar.php -->
-    </nav>
-
     <main>
-
-        <div id="top-controls">
-            <div class="row">
-                <div class="col s6">
-                    <ul class="tabs">
-                        <li class="tab col s3"><a class="active" href="#tracks-container">Tracks</a></li>
-                        <li class="tab col s3"><a href="#albums-container">Albums</a></li>
-                        <li class="tab col s3"><a href="#artists-container">Artists</a></li>
-                        <li class="tab col s3"><a href="#playlists-container">Playlists</a></li>
-                    </ul>
-                </div>
-                <div class="col s6">
-                    <div class="right">
-                        <select id="sort-by" class="browser-default">
-                            <option value="" disabled selected>Sort By</option>
-                            <option value="1">Title (Asc)</option>
-                            <option value="2">Title (Desc)</option>
-                            <option value="3">Artist (Asc)</option>
-                            <option value="4">Artist (Desc)</option>
-                            <option value="5">Album (Asc)</option>
-                            <option value="6">Album (Desc)</option>
-                            <option value="7">Duration (Asc)</option>
-                            <option value="8">Duration (Desc)</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="select-library-location-wrapper" class="row valign-wrapper">
-            <div class="col s6 offset-s3 valign z-depth-3">
-                <h4>Your music library is empty.</h4>
-                <p>Add a folder containing music to start.</p>
-                <input type="file" id="library-location" name="files[]" webkitdirectory directory multiple>
-            </div>
-        </div>
 
         <div id="tracks-container" class="music-container">
 
@@ -85,7 +30,7 @@
         </div>
 
         <div id="playlists-container" class="music-container">
-            <h1>Playlists</h1>
+            
         </div>
 
         <div id="audio-player" class="">
@@ -93,28 +38,7 @@
                 <source id='track1' src='' type='audio/mpeg'></source>
             </audio>
             <div id="playlist"></div>
-            <div id="player-controls">
-                <a class="player-prev" href="#"><i class="small material-icons">skip_previous</i></a>
-                <a class="player-next" href="#"><i class="small material-icons">skip_next</i></a>
-            </div>
         </div>
-
-        <noscript>
-            <div id="noscript-warning">
-                <div class="row">
-                    <div class="col s6 offset-3">
-                        <h2>Your browser does not support Javascript.</h2>
-                        <p>Please enable it to continue.</p>
-                        <style>
-                            .music-container {
-                                display: none;
-                            }
-
-                        </style>
-                    </div>
-                </div>
-            </div>
-        </noscript>
     </main>
 
     <footer>

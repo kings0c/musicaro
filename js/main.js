@@ -1,77 +1,17 @@
-//Sort tracks given param and order
-//Param can be one of title / artists / album
-//Order must be either "asc" or "desc"
-function sortTracksBy(param, order) {
-    //Add each track to an array so we can sort them
-    var tracks = [];
-    $(".music-item").each(function () {
-        tracks.push($(this));
-    });
-
-    tracks.sort(function (a, b) {
-        //Numerically compare the lowercase version of each strings
-        if (a.find(".track-" + param).text().toLowerCase() < b.find(".track-" + param).text().toLowerCase()) {
-            if (order == "asc") return -1;
-            else return 1;
-        }
-        if (a.find(".track-" + param).text().toLowerCase() > b.find(".track-" + param).text().toLowerCase()) {
-            if (order == "asc") return 1;
-            else return -1;
-        }
-        return 0;
-    });
-
-    //Now set the flexbox order property according to their order in the array
-    for (var i = 0; i < tracks.length; i++) {
-        tracks[i].css("order", i);
-    }
-}
-
-//Sort tracks by duration by specified order
-//Order must be either "asc" or "desc"
-function sortTracksByDuration(order) {
-    //Add each track to an array so we can sort them
-    var tracks = [];
-    $(".music-item").each(function () {
-        tracks.push($(this));
-    });
-
-    tracks.sort(function (a, b) {
-        //Split the duration text up around : (eg 3:10 goes to [[0] => 3, [1] => 10]
-        //Convert it to seconds and sort
-        var time1secs = a.find(".track-duration").text().toLowerCase().split(":");
-        time1secs = 60 * parseInt(time1secs[0]) + parseInt(time1secs[1]);
-
-        var time2secs = b.find(".track-duration").text().toLowerCase().split(":");
-        time2secs = 60 * parseInt(time2secs[0]) + parseInt(time2secs[1]);
-
-        if (time1secs < time2secs) {
-            if (order == "asc") return -1;
-            else return 1;
-        }
-        if (time1secs > time2secs) {
-            if (order == "asc") return 1;
-            else return -1;
-        }
-        return 0;
-    });
-
-    //Now set the flexbox order property according to their order in the array
-    for (var i = 0; i < tracks.length; i++) {
-        tracks[i].css("order", i);
-    }
-}
+/*  JS File for background.htm
+ *   Runs background process for chrome extension
+ *   popup.js talks to the managers in this file (LibraryManager, PlaylistManager)
+ */
 
 $(document).ready(function () {
 
     //Start library manager
     window.libManager = new LibraryManager();
-    window.libManager.init();
 
     //Start playlist manager.
     window.playlistManager = new PlaylistManager();
     window.playlistManager.init();
-    
+
 });
 
 /*
@@ -317,17 +257,7 @@ function LibraryManager() {
     this.albums = [];
     this.artists = [];
 
-    //Check for File API support and bind to change event of <input type=file>
-    this.init = function () {
-        if (window.File && window.FileReader && window.FileList && window.Blob) {
-            //Add listener to input
-            document.getElementById('library-location').addEventListener('change', this.handleFileSelect, false);
-        } else {
-            $("#select-library-location-wrapper").html('The File APIs are not fully supported in this browser.');
-        }
-    };
-
-    //Event listener function, what to do with FileList passed by <input type=file>
+    //What to do with FileList passed by <input type=file>
     this.handleFileSelect = function (files) {
         //var files = evt.target.files; // FileList object
 
@@ -385,7 +315,7 @@ function LibraryManager() {
 
                         if (!("picture" in tags)) {
                             //Grab album art from deezer
-                            newTrack.getAlbumArtFromDeezer();
+                            //newTrack.getAlbumArtFromDeezer();
                         }
 
                         //Resolve the deferred
@@ -416,7 +346,7 @@ function LibraryManager() {
 
             console.log("Populating artists tab.");
             _this.populateArtists();
-            
+
             //Now trigger refresh on popup
             console.log("Refreshing popup view");
             chrome.extension.getViews()[1].bgInterface.getTracks();
@@ -463,7 +393,7 @@ function LibraryManager() {
     };
 
     this.saveLibrary = function () {
-        
+
     };
 
     this.loadLibrary = function () {
@@ -471,12 +401,17 @@ function LibraryManager() {
     };
 }
 
+/*  PlaylistManager object
+ *   Controls playlist functions eg prev/next, play/pause, play new track, and queue track
+ *
+ */
+
 function PlaylistManager() {
-    
+
     var _this = this;
-    
+
     this.player = null;
-    this.currentTrack = null;
+    this.currentTrackID = null;
     this.currentTrackIndex = null;
     this.currentTime = null;
     this.isPlaying = false;
@@ -484,12 +419,13 @@ function PlaylistManager() {
     this.init = function () {
         this.player = $("#html5-audio")[0];
         this.currentTrackIndex = 0;
-        
+
         //Listen for start of playing, set isPlaying
         $("#html5-audio")[0].addEventListener("playing", function (e) {
             _this.isPlaying = true;
+            //chrome.extension.getViews()[1].bgInterface.startedPlaying();
         });
-        
+
         //Listen for pause, set isPlaying
         $("#html5-audio")[0].addEventListener("pause", function (e) {
             _this.isPlaying = false;
@@ -500,35 +436,42 @@ function PlaylistManager() {
             _this.isPlaying = false;
             _this.playNext();
         });
-        
+
         //Listen for time change and update our currentTime
         $("#html5-audio")[0].addEventListener("timeupdate", function (e) {
-            _this.currentTime = e.target.currentTime;
+            //_this.currentTime = e.target.currentTime;
+            _this.updateCurrentTime(e.target.currentTime);
         });
 
 
     };
-    
-    this.getCurrentTime = function() {
-        
+
+    this.getCurrentTime = function () {
+
     };
 
-    this.playTrack = function (url, artist, title) {
+    this.playTrack = function (url, artist, title, trackid) {
         $("#playlist").empty(); //Empty the existing playlist
 
         //Add a new li to the our playlist
-        $("#playlist").append("<li class='selected'><a href='" + url + "'><b>" + artist + "</b> - " + title + "</a></li>");
+        $("#playlist").append("<li class='selected' data-id='" + trackid + "'><a href='" + url + "'><b>" + artist + "</b> - " + title + "</a></li>");
 
-        var audio = $("#html5-audio")[0];
         var source = $('#track1')[0];
         source.src = url;
 
-        audio.load(); //Load the track
-        audio.play(); //And play
+        this.player.load(); //Load the track
+        this.player.play(); //And play
+
+        //Let the popup.js know we're playing a new song
+        this.currentTrackID = trackid;
+        if (chrome.extension.getViews()[1]) {
+            chrome.extension.getViews()[1].bgInterface.startedPlaying(trackid);
+        }
+
     };
 
-    this.queueTrack = function (url, artist, title) {
-        $("#playlist").append("<li><a href='" + url + "'><b>" + artist + "</b> - " + title + "</a></li>");
+    this.queueTrack = function (url, artist, title, trackid) {
+        $("#playlist").append("<li data-id='" + trackid + "'><a href='" + url + "'><b>" + artist + "</b> - " + title + "</a></li>");
     };
 
     this.playNext = function () {
@@ -536,14 +479,19 @@ function PlaylistManager() {
         if (this.currentTrackIndex < $("#playlist li").length - 1) this.currentTrackIndex++;
         else return false;
 
-        var audio = $("#html5-audio")[0];
         var source = $('#track1')[0];
+        var trackID = $("#playlist li:nth-child(" + (this.currentTrackIndex + 1) + ")").data("id");
         var trackURL = $("#playlist li:nth-child(" + (this.currentTrackIndex + 1) + ") a").attr("href");
         source.src = trackURL;
 
-        audio.load(); //call this to just preload the audio without playing
-        audio.play(); //call this to play the song right away
+        this.player.load(); //call this to just preload the audio without playing
+        this.player.play(); //call this to play the song right away
 
+        //Let the popup.js know we're playing a new song
+        this.currentTrackID = trackID;
+        if (chrome.extension.getViews()[1]) {
+            chrome.extension.getViews()[1].bgInterface.startedPlaying(trackID);
+        }
     };
 
     this.playPrev = function () {
@@ -553,10 +501,43 @@ function PlaylistManager() {
 
         var audio = $("#html5-audio")[0];
         var source = $('#track1')[0];
+        var trackID = $("#playlist li:nth-child(" + (this.currentTrackIndex + 1) + ")").data("id");
         var trackURL = $("#playlist li:nth-child(" + (this.currentTrackIndex + 1) + ") a").attr("href");
         source.src = trackURL;
 
-        audio.load(); //call this to just preload the audio without playing
-        audio.play(); //call this to play the song right away
+        this.player.load(); //call this to just preload the audio without playing
+        this.player.play(); //call this to play the song right away
+
+        //Let the popup.js know we're playing a new song
+        this.currentTrackID = trackID;
+
+        if (chrome.extension.getViews()[1]) {
+            chrome.extension.getViews()[1].bgInterface.startedPlaying(trackID);
+        }
+    };
+
+    this.play = function () {
+        this.player.play();
+        //Let the popup.js know we've started playing again
+        if (chrome.extension.getViews()[1]) {
+            chrome.extension.getViews()[1].bgInterface.startedPlaying(this.currentTrackID);
+        }
+    };
+
+    this.pause = function () {
+        this.player.pause();
+
+        //Let the popup.js know we've paused
+        if (chrome.extension.getViews()[1]) {
+            chrome.extension.getViews()[1].bgInterface.paused();
+        }
+    };
+
+    this.updateCurrentTime = function (time, maxTime) {
+        this.currentTime = time;
+        //Let the popup.js know we've changed time
+        if (chrome.extension.getViews()[1]) {
+            chrome.extension.getViews()[1].bgInterface.updateTime(time, this.player.duration);
+        }
     };
 }

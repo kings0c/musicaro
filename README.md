@@ -1,32 +1,21 @@
 # Musicaro
-All your music in one place - a browser-based music player and organiser.
+Music player for chrome with ID3 tag support.
 
 ## Project Status
 **Alpha**  
-Accepts FileList via HTML5 File API
-Pulls album art and track info from ID3 Tags, or Deezer API if not found.
-Basic front-end design in place.  
-Sorting of tracks works  
-Search working
-Web player working
-
-##Live example
-https://www.hetherington.tv/projects/musicaro
+* Accepts FileList via HTML5 File API
+* Pulls album art and track info from ID3 Tags, or Deezer API if not found.
+* Basic front-end design in place.  
+* Can sort tracks by title, artist, album or duration
+* Search working
+* Web player working
 
 ## Requirements
-* A local web server running PHP and MySQL ([EasyPHP](http://www.easyphp.org/) for Windows or [AMPPS](http://www.ampps.com/) for MacOS for example)
+* Chrome 
 
-## How to use
-1. Clone or download repository to a folder on your PC
-2. Place musicaro folder in your web server directory
-6. Open index.htm in a browser
-
-## Design Specs
-* Looks pretty (material design at the moment)
-* Responsive design
-* Pulls album art and track info from a web API (Deezer)
-* Play tracks via browser
-* Playlists
+## How to install
+1. Open chrome://extensions in Chrome
+2. Drag musicaro.crx into the extensions folder.
 
 ## To Do
  * User Playlists
@@ -34,5 +23,4 @@ https://www.hetherington.tv/projects/musicaro
  * Speed up library update
  * Show tracks currently in playlist
  * Persistent Library Storage
- * Make into chrome extension
- * Weird bug. Album art deezer callback doesn't fire. Sleeping and resuming laptop fixes? wtf?
+ * Weird bug. Album art deezer callback doesn't fire.

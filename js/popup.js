@@ -8,28 +8,30 @@
 //Order must be either "asc" or "desc"
 function sortTracksBy(param, order) {
     //Add each track to an array so we can sort them
-    var tracks = [];
-    $(".music-item").each(function () {
-        tracks.push($(this));
-    });
+    $("#tracks-container, #albums-container, #artists-container").each(function() {
+        var tracks = [];
+        $(this).find(".music-item").each(function () {
+            tracks.push($(this));
+        });
 
-    tracks.sort(function (a, b) {
-        //Numerically compare the lowercase version of each strings
-        if (a.find(".track-" + param).text().toLowerCase() < b.find(".track-" + param).text().toLowerCase()) {
-            if (order == "asc") return -1;
-            else return 1;
-        }
-        if (a.find(".track-" + param).text().toLowerCase() > b.find(".track-" + param).text().toLowerCase()) {
-            if (order == "asc") return 1;
-            else return -1;
-        }
-        return 0;
-    });
+        tracks.sort(function (a, b) {
+            //Numerically compare the lowercase version of each strings
+            if (a.find(".track-" + param).text().toLowerCase() < b.find(".track-" + param).text().toLowerCase()) {
+                if (order == "asc") return -1;
+                else return 1;
+            }
+            if (a.find(".track-" + param).text().toLowerCase() > b.find(".track-" + param).text().toLowerCase()) {
+                if (order == "asc") return 1;
+                else return -1;
+            }
+            return 0;
+        });
 
-    //Now set the flexbox order property according to their order in the array
-    for (var i = 0; i < tracks.length; i++) {
-        tracks[i].css("order", i);
-    }
+        //Now set the flexbox order property according to their order in the array
+        for (var i = 0; i < tracks.length; i++) {
+            tracks[i].css("order", i);
+        }
+    });
 }
 
 //Sort tracks by duration by specified order
@@ -37,7 +39,7 @@ function sortTracksBy(param, order) {
 function sortTracksByDuration(order) {
     //Add each track to an array so we can sort them
     var tracks = [];
-    $(".music-item").each(function () {
+    $("#tracks-container .music-item").each(function () {
         tracks.push($(this));
     });
 
@@ -49,6 +51,8 @@ function sortTracksByDuration(order) {
 
         var time2secs = b.find(".track-duration").text().toLowerCase().split(":");
         time2secs = 60 * parseInt(time2secs[0]) + parseInt(time2secs[1]);
+        
+        //console.log(a.find(".track-title")
 
         if (time1secs < time2secs) {
             if (order == "asc") return -1;

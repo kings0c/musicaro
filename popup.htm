@@ -19,12 +19,12 @@
         <div class="nav-wrapper">
             <a href="index.php" class="left logo"><h1>Musicaro</h1></a>
             <ul class="right">
-                <li>
-                    <!--<a href="#" id="library-add-folder"><i class="material-icons">library_add</i></a>-->
-                </li>
-                <li>
+                <!--<li class="tooltipped" data-position="bottom" data-delay="25" data-tooltip="Add new folder">
+                    <a href="#" id="library-add-folder"><i class="material-icons">library_add</i></a>
+                </li>-->
+                <li class="tooltipped" data-position="bottom" data-delay="25" data-tooltip="Search Library">
                     <form class="input-field">
-                        <input id="search" type="search" required class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="Search Library">
+                        <input id="search" type="search">
                         <label for="search"><i class="material-icons">search</i></label>
                     </form>
                 </li>
@@ -41,7 +41,7 @@
                         <li class="tab col s3"><a class="active" href="#tracks-container">Tracks</a></li>
                         <li class="tab col s3"><a href="#albums-container">Albums</a></li>
                         <li class="tab col s3"><a href="#artists-container">Artists</a></li>
-                        <li class="tab col s3"><a href="#playlists-container">Playlists</a></li>
+                        <!--<li class="tab col s3"><a href="#playlists-container">Playlists</a></li>-->
                     </ul>
                 </div>
                 <div class="col s6">
@@ -54,8 +54,8 @@
                             <option value="4">Artist (Desc)</option>
                             <option value="5">Album (Asc)</option>
                             <option value="6">Album (Desc)</option>
-                            <!--<option value="7">Duration (Asc)</option>
-                            <option value="8">Duration (Desc)</option>-->
+                            <option value="7">Duration (Asc)</option>
+                            <option value="8">Duration (Desc)</option>
                         </select>
                     </div>
                 </div>
@@ -69,15 +69,35 @@
                 <input type="file" id="library-location" name="files[]" webkitdirectory directory multiple>
                 
                 <!--AJAX Loading Spinner-->
-                <div id="circularG" class="ajax-spinner">
-                    <div id="circularG_1" class="circularG"></div>
-                    <div id="circularG_2" class="circularG"></div>
-                    <div id="circularG_3" class="circularG"></div>
-                    <div id="circularG_4" class="circularG"></div>
-                    <div id="circularG_5" class="circularG"></div>
-                    <div id="circularG_6" class="circularG"></div>
-                    <div id="circularG_7" class="circularG"></div>
-                    <div id="circularG_8" class="circularG"></div>
+                <div id="select-library-spinner" class="ajax-spinner">
+                    <div class="circularG circularG_1"></div>
+                    <div class="circularG circularG_2"></div>
+                    <div class="circularG circularG_3"></div>
+                    <div class="circularG circularG_4"></div>
+                    <div class="circularG circularG_5"></div>
+                    <div class="circularG circularG_6"></div>
+                    <div class="circularG circularG_7"></div>
+                    <div class="circularG circularG_8"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="add-folder-wrapper" class="row valign-wrapper">
+            <div class="col s6 offset-s3 valign z-depth-3">
+                <h4>Add a folder to library.</h4>
+                <p class="folder-instructions">Select a folder containing music to add it to your library.</p>
+                <input type="file" id="folder-location" name="files[]" webkitdirectory directory multiple>
+                
+                <!--AJAX Loading Spinner-->
+                <div id="add-folder-spinner" class="ajax-spinner">
+                    <div class="circularG circularG_1"></div>
+                    <div class="circularG circularG_2"></div>
+                    <div class="circularG circularG_3"></div>
+                    <div class="circularG circularG_4"></div>
+                    <div class="circularG circularG_5"></div>
+                    <div class="circularG circularG_6"></div>
+                    <div class="circularG circularG_7"></div>
+                    <div class="circularG circularG_8"></div>
                 </div>
             </div>
         </div>
@@ -95,7 +115,7 @@
         </div>
 
         <div id="playlists-container" class="music-container">
-            <h1>Playlists</h1>
+            
         </div>
 
         <div id="audio-player" class="">

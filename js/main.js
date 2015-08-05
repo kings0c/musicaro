@@ -12,13 +12,22 @@ $(document).ready(function () {
     window.playlistManager = new PlaylistManager();
     window.playlistManager.init();
 
+    /*convertImgToBase64URL("http://userserve-ak.last.fm/serve/174s/59987371.jpg", function(base64Data) {
+        console.log(base64Data);
+    });*/
+
 });
 
-/*
- *   Music Track Class
- *   
- */
 
+/**
+ * Music Track object
+ * @param {Integer} trackID  Internal track ID
+ * @param {String}  title    Title of the track
+ * @param {String}  artist   Artist name
+ * @param {String}  album    Album name
+ * @param {String}  imagesrc path to album art or base64 encoded image
+ * @param {String}  url      Path to blob provided by HTML file API 
+ */
 function Track(trackID, title, artist, album, imagesrc, url) {
     this.trackID = trackID;
     this.title = title;
@@ -29,6 +38,10 @@ function Track(trackID, title, artist, album, imagesrc, url) {
     this.dom = {};
 }
 
+
+/**
+ * Output a new card for the track in #tracks-container
+ */
 Track.prototype.displayCard = function () {
     var container = "#tracks-container";
 
@@ -59,7 +72,7 @@ Track.prototype.displayCard = function () {
 
     //Add an event listener so
     //When the <audio> has loaded track metadata, display the duration
-    $(container).find(".music-item:last-child .track-audio").on("loadedmetadata", function (_event) {
+    $(this.dom).find(".track-audio").on("loadedmetadata", function (_event) {
 
         var duration = Math.round($(this)[0].duration, 2);
         var seconds = duration % 60;
@@ -73,6 +86,10 @@ Track.prototype.displayCard = function () {
     });
 };
 
+
+/**
+ * Get album art from deezer API, on success change the <img src>
+ */
 Track.prototype.getAlbumArtFromDeezer = function () {
     var artistEncoded = escape(this.artist);
     var albumEncoded = escape(this.album);
@@ -84,13 +101,13 @@ Track.prototype.getAlbumArtFromDeezer = function () {
         ID = "0" + ID;
     }
 
-    //Request JSONP from Deezer
+    //Request JSON from Deezer
     $.ajax({
         url: "https://api.deezer.com/search",
         // The name of the callback parameter as specified by Deezer
         jsonp: "callback",
 
-        // Tell jQuery we're expecting JSONP
+        // Tell jQuery we're expecting JSON
         dataType: "jsonp",
 
         // Tell deezer what we want
@@ -127,11 +144,81 @@ Track.prototype.getAlbumArtFromDeezer = function () {
     });
 };
 
-/*
- *   Music Artist Class
- *   
+/**
+ * Convert an image 
+ * to a base64 url
+ * @param  {String}   url         
+ * @param  {Function} callback    
+ * @param  {String}   [outputFormat=image/png]           
  */
+function convertImgToBase64URL(url, callback, outputFormat) {
+    var img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = function () {
+        var canvas = document.createElement('CANVAS'),
+            ctx = canvas.getContext('2d'),
+            dataURL;
+        canvas.height = this.height;
+        canvas.width = this.width;
+        ctx.drawImage(this, 0, 0);
+        dataURL = canvas.toDataURL(outputFormat);
+        callback(dataURL);
+        canvas = null;
+    };
+    img.src = url;
+}
 
+/**
+ * Request album art from Last.FM API, on success change the <img src>
+ */
+Track.prototype.getAlbumArtFromLastFM = function () {
+    var artistEncoded = escape(this.artist);
+    var albumEncoded = escape(this.album);
+    var titleEncoded = escape(this.title);
+    var ID = this.trackID;
+    var _this = this;
+
+    //Request JSON from Last.fm
+    $.ajax({
+        url: "http://ws.audioscrobbler.com/2.0/",
+        dataType: "json",
+        data: {
+            method: "album.getInfo",
+            api_key: "8a25e929a53ad33d8f5c1507ab70b84c",
+            artist: _this.artist,
+            album: _this.album,
+            format: "json"
+        }
+    }).done(function (result) {
+
+        //If Last.fm brought us an album cover
+        if (result.album) {
+            //Find the "large" image
+            var imageArray = result.album.image;
+            var imageSrc = "";
+            for (var i in imageArray) {
+                if (imageArray[i].size == "large") {
+                    imageSrc = imageArray[i]["#text"];
+                }
+            }
+
+            if (imageSrc) {
+                console.log("LastFM provided art for track " + _this.trackID + " - " + result.album.name + " by " + result.album.artist);
+                
+                //Update our class variable
+                _this.imagesrc = imageSrc;
+            }
+        }
+
+    });
+};
+
+/**
+ * Artist object
+ * @param {Integer} artistID Internal artist ID
+ * @param {String}  artist   Name of artist
+ * @param {String}  imagesrc Path to artist art or base 64 encoded image
+ */
 function Artist(artistID, artist, imagesrc) {
     this.artistID = artistID;
     this.artist = artist;
@@ -139,6 +226,10 @@ function Artist(artistID, artist, imagesrc) {
     this.dom = {};
 };
 
+
+/**
+ * Display a card for the artist in #artists-container
+ */
 Artist.prototype.displayCard = function () {
     var container = "#artists-container";
 
@@ -159,6 +250,10 @@ Artist.prototype.displayCard = function () {
     $(container).append(element);
 };
 
+
+/**
+ * Get the artist art from the Deezer API and update the card <img src>
+ */
 Artist.prototype.getArtistArtFromDeezer = function () {
     var artistEncoded = escape(this.artist);
     var ID = this.artistID;
@@ -171,48 +266,58 @@ Artist.prototype.getArtistArtFromDeezer = function () {
     //Request JSONP from Deezer
     $.ajax({
         url: "https://api.deezer.com/search",
-        // The name of the callback parameter
-        jsonp: "callback",
 
         // Tell jQuery we're expecting JSONP
-        dataType: "jsonp",
+        dataType: "json",
 
         // Tell deezer what we want
         data: {
             q: "artist:%27" + artistEncoded + "%27",
             limit: "2",
-            output: "jsonp",
+            output: "json",
             format: "json",
             strict: "on",
+            timeout: 3000,
             myID: ID
-        },
-        success: function (result) {
-            //A little lazy...
-            var libManager = window.libManager;
-
-            //If Deezer brought us an album cover
-            if (result.total > 0) {
-                var imageSrc = result.data[0].artist.picture_medium;
-                if (imageSrc) {
-                    console.log("Deezer provided image: " + imageSrc + " for artist ID " + _this.artistID);
-
-                    //Update our card
-                    $(_this.dom).find(".card-image img").attr("src", imageSrc);
-
-                    //And our class variable
-                    _this.imagesrc = imageSrc;
-                }
-            }
-
         }
+    }).done(function (result) {
+        //A little lazy...
+        var libManager = window.libManager;
+
+        //If Deezer brought us an album cover
+        if (result.total > 0) {
+            var imageSrc = result.data[0].artist.picture_medium;
+            if (imageSrc) {
+                console.log("Deezer provided image: " + imageSrc + " for artist ID " + _this.artistID);
+
+                //Update our card
+                //$(_this.dom).find(".card-image img").attr("src", imageSrc);
+
+                var img = $("<img />").attr('src', imageSrc)
+                    .load(function () {
+                        if (!this.complete || typeof this.naturalWidth == "undefined" || this.naturalWidth == 0) {
+                            $(_this.dom).find(".card-image").html("<span>Broken Image</span>");
+                        } else {
+                            $(_this.dom).find(".card-image").html(img);
+                        }
+                    });
+
+                //And our class variable
+                _this.imagesrc = imageSrc;
+            }
+        }
+
     });
 };
 
-/*
- *   Music Album Class
- *   
- */
 
+/**
+ * Album object
+ * @param {Integer} albumID  Internal album ID
+ * @param {String}  artist   name of artist
+ * @param {String}  album    name of album
+ * @param {String}  imagesrc Path to album art or base64 encoded image
+ */
 function Album(albumID, artist, album, imagesrc) {
     this.albumID = albumID;
     this.artist = artist;
@@ -221,6 +326,10 @@ function Album(albumID, artist, album, imagesrc) {
     this.dom = {};
 };
 
+
+/**
+ * Display a card for the artist in #albums-container
+ */
 Album.prototype.displayCard = function () {
     var container = "#albums-container";
 
@@ -247,7 +356,6 @@ Album.prototype.displayCard = function () {
  *   Then load ID3 tag reader, for each file object from browse
  *   output a materialize.css card with the title, artist and album art
  */
-
 function LibraryManager() {
 
     var _this = this;
@@ -284,72 +392,65 @@ function LibraryManager() {
             }
 
             function getTagsFromFile(f, reader, objectURL) {
-                //Create a new deferred and place it on the promises stack.
-                var def = new $.Deferred();
-                _this.promises.push(def);
-
-                ID3.loadTags(objectURL, function () {
-                    var tags = ID3.getAllTags(objectURL);
-                    if (tags) {
-                        var artist = tags.artist || "Unknown";
-                        var title = tags.title || "Unknown";
-                        var album = tags.album || "Unknown";
-                        var imagesrc = "image/default.png"; //Default image
-                        if ("picture" in tags) {
-                            var image = tags.picture;
-                            var base64String = "";
-                            for (var j = 0; j < image.data.length; j++) {
-                                base64String += String.fromCharCode(image.data[j]);
+                //Create a new promise and place it on the promises stack.
+                var promise = new Promise(function (resolve, reject) {
+                    ID3.loadTags(objectURL, function () {
+                        var tags = ID3.getAllTags(objectURL);
+                        if (tags) {
+                            var artist = tags.artist || "Unknown";
+                            var title = tags.title || "Unknown";
+                            var album = tags.album || "Unknown";
+                            var imagesrc = "image/default.png"; //Default image
+                            if ("picture" in tags) {
+                                var image = tags.picture;
+                                var base64String = "";
+                                for (var j = 0; j < image.data.length; j++) {
+                                    base64String += String.fromCharCode(image.data[j]);
+                                }
+                                imagesrc = "data:" + image.format + ";base64," + window.btoa(base64String);
+                            } else {
+                                //No image in ID3 tags, grab one from Deezer 
+                                //Log to console for debugging
+                                console.log("No album art found for track: " + title + " by " + artist + " in ID3 tags. Trying LastFM.");
                             }
-                            imagesrc = "data:" + image.format + ";base64," + window.btoa(base64String);
+
+                            //Now create a new Track object and display it
+                            var newTrack = new Track(_this.tracks.length, title, artist, album, imagesrc, objectURL);
+                            _this.tracks.push(newTrack);
+                            newTrack.displayCard();
+
+                            if (!("picture" in tags)) {
+                                //Grab album art from deezer, deferred is resolved here
+                                newTrack.getAlbumArtFromLastFM();
+                            }
+
                         } else {
-                            //No image in ID3 tags, grab one from Deezer 
-                            //Log to console for debugging
-                            console.log("No album art found for track: " + title + " by " + artist + " in ID3 tags. Trying Deezer.");
+                            console.log("No tags for current track");
                         }
 
-                        //Now create a new Track object and display it
-                        var newTrack = new Track(_this.tracks.length, title, artist, album, imagesrc, objectURL);
-                        _this.tracks.push(newTrack);
-                        newTrack.displayCard();
-
-                        if (!("picture" in tags)) {
-                            //Grab album art from deezer
-                            //newTrack.getAlbumArtFromDeezer();
-                        }
-
-                        //Resolve the deferred
-                        def.resolve();
-
-                    } else {
-                        console.log("No tags for current track");
-                    }
-                }, {
-                    tags: ["artist", "title", "album", "year", "comment", "track", "genre", "lyrics", "picture"],
-                    dataReader: reader
+                        resolve();
+                    }, {
+                        tags: ["artist", "title", "album", "year", "comment", "track", "genre", "lyrics", "picture"],
+                        dataReader: reader
+                    });
                 });
-            }
-        } //End for
+                _this.promises.push(promise);
+            } //End getTagsFromFile
+        }//End for
 
-        for (var p = 0; p < _this.promises.length; p++) {
-            console.log("Promise state " + _this.promises[p].state());
-        }
 
-        $.when.apply($, _this.promises).done(afterTracksDone);
+        Promise.all(_this.promises).then(function() {
+            afterTracksDone();
+        });
 
         function afterTracksDone() {
             //Tracks have been added
 
-            //Now populate other tabs
-            console.log("Populating albums tab.");
-            _this.populateAlbums();
-
-            console.log("Populating artists tab.");
-            _this.populateArtists();
-
-            //Now trigger refresh on popup
+            //Trigger refresh on popup
             console.log("Refreshing popup view");
-            chrome.extension.getViews()[1].bgInterface.getTracks();
+            if(chrome.extension.getViews()[1]) {
+                chrome.extension.getViews()[1].popupManager.getTracks();
+            }
         }
     };
 
@@ -367,7 +468,6 @@ function LibraryManager() {
 
                 var newAlbum = new Album(this.albums.length - 1, track.artist, track.album, track.imagesrc);
                 this.artists.push(newAlbum);
-                newAlbum.displayCard();
             }
         }
     };
@@ -386,7 +486,6 @@ function LibraryManager() {
 
                 var newArtist = new Artist(this.artists.length - 1, track.artist, track.imagesrc);
                 this.artists.push(newArtist);
-                newArtist.displayCard();
                 newArtist.getArtistArtFromDeezer();
             }
         }
@@ -423,7 +522,7 @@ function PlaylistManager() {
         //Listen for start of playing, set isPlaying
         $("#html5-audio")[0].addEventListener("playing", function (e) {
             _this.isPlaying = true;
-            //chrome.extension.getViews()[1].bgInterface.startedPlaying();
+            //chrome.extension.getViews()[1].popupManager.startedPlaying();
         });
 
         //Listen for pause, set isPlaying
@@ -465,7 +564,7 @@ function PlaylistManager() {
         //Let the popup.js know we're playing a new song
         this.currentTrackID = trackid;
         if (chrome.extension.getViews()[1]) {
-            chrome.extension.getViews()[1].bgInterface.startedPlaying(trackid);
+            chrome.extension.getViews()[1].popupManager.startedPlaying(trackid);
         }
 
     };
@@ -490,7 +589,7 @@ function PlaylistManager() {
         //Let the popup.js know we're playing a new song
         this.currentTrackID = trackID;
         if (chrome.extension.getViews()[1]) {
-            chrome.extension.getViews()[1].bgInterface.startedPlaying(trackID);
+            chrome.extension.getViews()[1].popupManager.startedPlaying(trackID);
         }
     };
 
@@ -512,7 +611,7 @@ function PlaylistManager() {
         this.currentTrackID = trackID;
 
         if (chrome.extension.getViews()[1]) {
-            chrome.extension.getViews()[1].bgInterface.startedPlaying(trackID);
+            chrome.extension.getViews()[1].popupManager.startedPlaying(trackID);
         }
     };
 
@@ -520,7 +619,7 @@ function PlaylistManager() {
         this.player.play();
         //Let the popup.js know we've started playing again
         if (chrome.extension.getViews()[1]) {
-            chrome.extension.getViews()[1].bgInterface.startedPlaying(this.currentTrackID);
+            chrome.extension.getViews()[1].popupManager.startedPlaying(this.currentTrackID);
         }
     };
 
@@ -529,7 +628,7 @@ function PlaylistManager() {
 
         //Let the popup.js know we've paused
         if (chrome.extension.getViews()[1]) {
-            chrome.extension.getViews()[1].bgInterface.paused();
+            chrome.extension.getViews()[1].popupManager.setPaused();
         }
     };
 
@@ -537,7 +636,7 @@ function PlaylistManager() {
         this.currentTime = time;
         //Let the popup.js know we've changed time
         if (chrome.extension.getViews()[1]) {
-            chrome.extension.getViews()[1].bgInterface.updateTime(time, this.player.duration);
+            chrome.extension.getViews()[1].popupManager.updateTime(time, this.player.duration);
         }
     };
 }

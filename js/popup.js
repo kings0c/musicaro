@@ -1,14 +1,14 @@
 /*  JS File for popup.htm
-*   Runs popup front-end process for chrome extension
-*   talks to the managers in main.js (LibraryManager, PlaylistManager)
-*/
+ *   Runs popup front-end process for chrome extension
+ *   talks to the managers in main.js (LibraryManager, PlaylistManager)
+ */
 
 //Sort tracks given param and order
 //Param can be one of title / artists / album
 //Order must be either "asc" or "desc"
 function sortTracksBy(param, order) {
     //Add each track to an array so we can sort them
-    $("#tracks-container, #albums-container, #artists-container").each(function() {
+    $("#tracks-container, #albums-container, #artists-container").each(function () {
         var tracks = [];
         $(this).find(".music-item").each(function () {
             tracks.push($(this));
@@ -51,7 +51,7 @@ function sortTracksByDuration(order) {
 
         var time2secs = b.find(".track-duration").text().toLowerCase().split(":");
         time2secs = 60 * parseInt(time2secs[0]) + parseInt(time2secs[1]);
-        
+
         //console.log(a.find(".track-title")
 
         if (time1secs < time2secs) {
@@ -147,8 +147,8 @@ $(document).ready(function () {
         $("#select-library-location-wrapper").html('The File APIs are not fully supported in this browser.');
     }
 
-    window.bgInterface = new BackgroundInterface();
-    bgInterface.getTracks();    //Get any already existing tracks from the background
+    window.popupManager = new PopupManager();
+    bgInterface.getTracks(); //Get any already existing tracks from the background
 });
 
 function fileSelectHandler(evt) {
@@ -163,12 +163,12 @@ function fileSelectHandler(evt) {
     $(".ajax-spinner").show(0);
 }
 
-/*  Object to interface with background page
- *
- *
+/*  Popup manager class, talks to the background page
+ *  Pulls arrays containing tracks/artists/albums
+ *  And displays them in the popup
  */
 
-function BackgroundInterface() {
+function PopupManager() {
     var _this = this;
     this.backgroundPage = chrome.extension.getBackgroundPage();
     this.currentTrack = null;
@@ -179,13 +179,63 @@ function BackgroundInterface() {
         if (backgroundPage.libManager.tracks.length) {
             $("#select-library-location-wrapper").hide();
 
-            $("#tracks-container").html($(backgroundPage.document.body).find("#tracks-container").html());
+            /*$("#tracks-container").html($(backgroundPage.document.body).find("#tracks-container").html());
             $("#artists-container").html($(backgroundPage.document.body).find("#artists-container").html());
-            $("#albums-container").html($(backgroundPage.document.body).find("#albums-container").html());
-
+            $("#albums-container").html($(backgroundPage.document.body).find("#albums-container").html());*/
+            
+            for (var t in backgroundPage.libManager.tracks) {
+                var track = backgroundPage.libManager.tracks[t];
+                
+                var dom = _this.displayCard(track.trackID, track.title, track.artist, track.album, track.imagesrc, track.url);
+                console.log("Setting image src to " + track.imagesrc + " for " + track.title);
+                $(dom).find(".card-image img").attr("src", track.imagesrc);
+            }
+            
             _this.enablePlayAndQueueLinks();
         }
     }
+
+    this.displayCard = function (trackID, title, artist, album, imagesrc, url) {
+        var container = "#tracks-container";
+
+        var element = $.parseHTML("<div class='card hoverable music-item' data-id='" + trackID + "'>" +
+            "<div class='card-image'>" +
+            "<img src='image/default.png'>" +
+            "</div>" +
+            "<div class='card-content'>" +
+            "<span class='track-duration right'>" + "</span>" +
+            "<span class='track-title'>" + title + "</span>" +
+            "<span class='track-artist'>" + artist + "</span>" +
+            "<span class='track-album'>" + album + "</span>" +
+            "<audio class='track-audio'>" +
+            "<source class='track-source' type='audio/mpeg' src='" + url + "'></source>" +
+            "</audio>" +
+            "</div>" +
+            "<div class='card-action'>" +
+            "<a class='play-track' href='#' data-url='" + url + "' data-artist='" + artist + "' data-title='" + title +
+            "'><i class='material-icons'>play_arrow</i></a>" +
+            "<a class='queue-track right' href='#' data-url='" + url + "' data-artist='" + artist + "' data-title='" + title +
+            "'><i class='material-icons'>queue_music</i></a>" +
+            "</div>" +
+            "</div>");
+        $(container).append(element);
+        return element;
+        
+        //Add an event listener so
+        //When the <audio> has loaded track metadata, display the duration
+        $(element).find(".track-audio").on("loadedmetadata", function (_event) {
+
+            var duration = Math.round($(this)[0].duration, 2);
+            var seconds = duration % 60;
+            var minutes = (duration - seconds) / 60;
+            if (seconds.toString().length < 2) {
+                seconds = "0" + seconds;
+            }
+            var durationString = Math.round(minutes) + ":" + seconds;
+
+            $(this).parent().find(".track-duration").text(durationString);
+        });
+    };
 
     //Enable play/queue links for each .music-item
     this.enablePlayAndQueueLinks = function () {
@@ -240,7 +290,7 @@ function BackgroundInterface() {
         $("#player-controls .player-playpause i").text('pause');
     };
 
-    this.paused = function () {
+    this.setPaused = function () {
         //Change every card's button to the play icon
         $(".music-item").each(function (e) {
             $(this).find(".play-track i").text('play_arrow');
@@ -249,9 +299,9 @@ function BackgroundInterface() {
         //Change player play/pause icon
         $("#player-controls .player-playpause i").text('play_arrow');
     };
-    
-    this.updateTime = function(time, maxTime) {
-        if(maxTime) { //Make sure maxTime isn't null, possible if track metadata isn't available yet
+
+    this.updateTime = function (time, maxTime) {
+        if (maxTime) { //Make sure maxTime isn't null, possible if track metadata isn't available yet
             var percentage = Math.floor((time / maxTime) * 100);
             $(".player-position").val(percentage);
         }

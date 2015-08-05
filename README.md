@@ -1,8 +1,10 @@
 # Musicaro
-Music player for chrome with ID3 tag support.
+Music player extension for Chrome with ID3 tag support.
+
+Available on the Chrome Web Store here: https://chrome.google.com/webstore/detail/musicaro/fooahoapllimblnanfeebledlibjphca
 
 ## Project Status
-**Alpha**  
+**Alpha** - under development
 * Accepts FileList via HTML5 File API
 * Pulls album art and track info from ID3 Tags, or Deezer API if not found.
 * Basic front-end design in place.  
@@ -11,16 +13,12 @@ Music player for chrome with ID3 tag support.
 * Web player working
 
 ## Requirements
-* Chrome 
-
-## How to install
-1. Open chrome://extensions in Chrome
-2. Drag musicaro.crx into the extensions folder.
+* Google Chrome 
 
 ## To Do
  * User Playlists
- * Test on mobiles
  * Speed up library update
  * Show tracks currently in playlist
  * Persistent Library Storage
- * Weird bug. Album art deezer callback doesn't fire.
+ * Add new folder after initial library location choice.
+ * Support for non-MP3 file formats

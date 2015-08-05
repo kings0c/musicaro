@@ -81,12 +81,11 @@ function sortTracksByDuration(order) {
 }
 
 $(document).ready(function () {
-
-    //Enable sort by dropdown
     
     //Hide the add folder menu
     $("#add-folder-wrapper").hide(0);
-
+    
+    //Enable sort by dropdown
     //***Could probably change this to call correct function by slicing up the dropdown value
     // Likely a waste of time while there's so few options
     $("#sort-by").change(function () {

@@ -285,7 +285,7 @@ function LibraryManager() {
             //Trigger refresh on popup
             console.log("Refreshing popup view");
             if(chrome.extension.getViews()[1]) {
-                chrome.extension.getViews()[1].popupManager.hideAddMenus();
+                chrome.extension.getViews()[1].popupManager.hideFolderSelectMenus();
                 chrome.extension.getViews()[1].popupManager.displayTracks();
             }
         }

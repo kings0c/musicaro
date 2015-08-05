@@ -102,30 +102,30 @@ $(document).ready(function () {
     var bgPage = chrome.extension.getBackgroundPage();
 
     //Enable player control buttons
-    //Next
-    $("#player-controls .player-next").click(function (e) {
-        bgPage.playlistManager.playNext();
-        e.preventDefault();
-        return false;
-    });
-    //Prev
-    $("#player-controls .player-prev").click(function (e) {
-        bgPage.playlistManager.playPrev();
-        e.preventDefault();
-        return false;
-    });
-    //PlayPause
-    $("#player-controls .player-playpause").click(function (e) {
-        if (bgPage.playlistManager.isPlaying) {
-            bgPage.playlistManager.pause();
-            $("#player-controls .player-playpause").html('<i class="small material-icons">play_arrow</i>');
-        } else {
-            bgPage.playlistManager.play();
-            $("#player-controls .player-playpause").html('<i class="small material-icons">pause</i>');
-        }
-        e.preventDefault();
-        return false;
-    });
+        //Next
+        $("#player-controls .player-next").click(function (e) {
+            bgPage.playlistManager.playNext();
+            e.preventDefault();
+            return false;
+        });
+        //Prev
+        $("#player-controls .player-prev").click(function (e) {
+            bgPage.playlistManager.playPrev();
+            e.preventDefault();
+            return false;
+        });
+        //PlayPause
+        $("#player-controls .player-playpause").click(function (e) {
+            if (bgPage.playlistManager.isPlaying) {
+                bgPage.playlistManager.pause();
+                $("#player-controls .player-playpause").html('<i class="small material-icons">play_arrow</i>');
+            } else {
+                bgPage.playlistManager.play();
+                $("#player-controls .player-playpause").html('<i class="small material-icons">pause</i>');
+            }
+            e.preventDefault();
+            return false;
+        });
 
     //Nav add folder button
     $("#library-add-folder").click(function () {
@@ -137,7 +137,7 @@ $(document).ready(function () {
         $("#add-folder-wrapper").show(0);
     });
 
-    //Enable file select
+    //Enable file select in #select-library-location-wrapper
     if (window.File && window.FileReader && window.FileList && window.Blob) {
         //Add listener to input
         $('#library-location')[0].addEventListener('change', selectLibraryHandler, false);
@@ -152,6 +152,7 @@ $(document).ready(function () {
     popupManager.displayArtists();
     
     //Check if a track is playing
+    //If so set it to playing
     var currentTrackID = bgPage.playlistManager.getCurrentlyPlaying();
     if(currentTrackID != null) {
         console.log("Currently playing track: " + currentTrackID);
@@ -164,6 +165,10 @@ $(document).ready(function () {
     });
 });
 
+/**
+ * Handler for select library location's <input type=file>
+ * @param {Object} evt Event
+ */
 function selectLibraryHandler(evt) {
     var files = evt.target.files; // FileList object
 
@@ -176,6 +181,10 @@ function selectLibraryHandler(evt) {
     $("#select-library-location-wrapper .ajax-spinner").show(0);
 }
 
+/**
+ * Handler for add folder's <input type=file>
+ * @param {Object} evt Event
+ */
 function addFolderHandler(evt) {
     var files = evt.target.files; // FileList object
 
@@ -193,12 +202,15 @@ function addFolderHandler(evt) {
  *  And displays them in the popup
  *  Handles search
  */
-
 function PopupManager() {
     var _this = this;
     this.backgroundPage = chrome.extension.getBackgroundPage();
     this.currentTrack = null;
     
+    /**
+     * Filter the tracks given an input string (from top search bar)
+     * @param {String} searchString The search query
+     */
     this.search = function(searchString) {
         searchString = searchString.toLowerCase();
         
@@ -223,17 +235,25 @@ function PopupManager() {
         }
     };
     
-    this.hideAddMenus = function () {
+    /**
+     * Hides the folder select menu's 
+     * Called by displayTracks after background is finished
+     */
+    this.hideFolderSelectMenus = function () {
         $("#select-library-location-wrapper").hide();
         $("#add-folder-wrapper").hide();
     };
 
+    /**
+     * Output a card for each item in backgroundPage.libManager.tracks array
+     * into #tracks-container via displayTrackCard
+     */
     this.displayTracks = function () {
         var backgroundPage = this.backgroundPage;
 
         if (backgroundPage.libManager.tracks.length) {
             
-            _this.hideAddMenus();
+            _this.hideFolderSelectMenus();
 
             for (var t in backgroundPage.libManager.tracks) {
                 var track = backgroundPage.libManager.tracks[t];
@@ -250,6 +270,10 @@ function PopupManager() {
         }
     };
     
+    /**
+     * Output a card for each item in backgroundPage.libManager.albums array
+     * into #albums-container via displayAlbumCard
+     */
     this.displayAlbums = function () {
         var backgroundPage = this.backgroundPage;
 
@@ -265,6 +289,10 @@ function PopupManager() {
         }
     };
     
+    /**
+     * Output a card for each item in backgroundPage.libManager.artists array
+     * into #artists-container via displayArtistCard
+     */
     this.displayArtists = function () {
         var backgroundPage = this.backgroundPage;
 
@@ -362,9 +390,12 @@ function PopupManager() {
         return element;
     };
 
-    //Enable play/queue links for each .music-item
+    /**
+     * Enable play/queue links for each .music-item in #tracks-container
+     */
     this.enablePlayAndQueueLinks = function () {
-
+        
+        //Enable play links
         $("#tracks-container .music-item .play-track").click(function (e) {
             var trackID = $(this).parent().parent().data("id");
             //If this track is already playing (the icon is pause not play)
@@ -397,6 +428,9 @@ function PopupManager() {
         });
     };
     
+    /**
+     * Enable Find Tracks links in #albums-container and #artists-container
+     */
     this.enableFindTracksLinks = function() {
         $("#albums-container .music-item .find-tracks").click(function(e) {
             
@@ -437,12 +471,16 @@ function PopupManager() {
         });
     };
 
+    /**
+     * Set the currently playing track. Changes the card's play/pause button and the players
+     * @param {Integer} trackid Internal track ID to set as playing
+     */
     this.setPlaying = function (trackid) {
 
         _this.currentTrack = trackid;
 
         //Change the currently playing tracks play button in card to pause
-        $(".music-item").each(function (e) {
+        $("#tracks-container .music-item").each(function (e) {
             if ($(this).data("id") == trackid) {
                 $(this).find(".play-track i").text('pause');
             } else {
@@ -454,9 +492,12 @@ function PopupManager() {
         $("#player-controls .player-playpause i").text('pause');
     };
 
+    /**
+     * Set state to paused. Change all play/pause to paused
+     */
     this.setPaused = function () {
         //Change every card's button to the play icon
-        $(".music-item").each(function (e) {
+        $("#tracks-container .music-item").each(function (e) {
             $(this).find(".play-track i").text('play_arrow');
         });
 
@@ -464,6 +505,11 @@ function PopupManager() {
         $("#player-controls .player-playpause i").text('play_arrow');
     };
 
+    /**
+     * Update the track-position slider with the current track time
+     * @param {Integer} time    Current time in track
+     * @param {Integer} maxTime Length of track
+     */
     this.updateTime = function (time, maxTime) {
         if (maxTime) { //Make sure maxTime isn't falsey, possible if track metadata isn't available yet
             var percentage = Math.floor((time / maxTime) * 100);

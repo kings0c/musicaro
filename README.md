@@ -6,7 +6,7 @@ Available on the Chrome Web Store here: https://chrome.google.com/webstore/detai
 ## Project Status
 **Alpha** - under development
 * Accepts FileList via HTML5 File API
-* Pulls album art and track info from ID3 Tags, or Deezer API if not found.
+* Pulls album art and track info from ID3 Tags, or Last.FM API if not found.
 * Basic front-end design in place.  
 * Can sort tracks by title, artist, album or duration
 * Search working

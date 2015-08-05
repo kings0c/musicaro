@@ -498,4 +498,8 @@ function PlaylistManager() {
             chrome.extension.getViews()[1].popupManager.updateTime(time, this.player.duration);
         }
     };
+    
+    this.getCurrentlyPlaying = function() {
+        return this.currentTrackID;
+    }  
 }

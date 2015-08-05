@@ -151,6 +151,13 @@ $(document).ready(function () {
     popupManager.displayAlbums();
     popupManager.displayArtists();
     
+    //Check if a track is playing
+    var currentTrackID = bgPage.playlistManager.getCurrentlyPlaying();
+    if(currentTrackID != null) {
+        console.log("Currently playing track: " + currentTrackID);
+        popupManager.setPlaying(currentTrackID);
+    }
+    
     //Enable nav search bar function
     $("nav form input").keyup(function () {
         popupManager.search($(this).val());
@@ -232,7 +239,7 @@ function PopupManager() {
                 var track = backgroundPage.libManager.tracks[t];
 
                 var dom = _this.displayTrackCard(track.trackID, track.title, track.artist, track.album, track.imagesrc, track.url);
-                console.log("Setting image src to " + track.imagesrc + " for " + track.title);
+                
                 $(dom).find(".card-image img").attr("src", track.imagesrc);
             }
 

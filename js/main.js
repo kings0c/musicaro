@@ -66,9 +66,10 @@ Track.prototype.getAlbumArtFromLastFM = function () {
     var _this = this;
 
     //Request JSON from Last.fm
-    $.ajax({
+    return $.ajax({
         url: "http://ws.audioscrobbler.com/2.0/",
         dataType: "json",
+        timeout: 3000,
         data: {
             method: "album.getInfo",
             api_key: "8a25e929a53ad33d8f5c1507ab70b84c",
@@ -76,27 +77,6 @@ Track.prototype.getAlbumArtFromLastFM = function () {
             album: _this.album,
             format: "json"
         }
-    }).done(function (result) {
-
-        //If Last.fm brought us an album cover
-        if (result.album) {
-            //Find the "large" image
-            var imageArray = result.album.image;
-            var imageSrc = "";
-            for (var i in imageArray) {
-                if (imageArray[i].size == "large") {
-                    imageSrc = imageArray[i]["#text"];
-                }
-            }
-
-            if (imageSrc) {
-                console.log("LastFM provided art for track " + _this.trackID + " - " + result.album.name + " by " + result.album.artist);
-                
-                //Update our class variable
-                _this.imagesrc = imageSrc;
-            }
-        }
-
     });
 };
 
@@ -121,36 +101,16 @@ Artist.prototype.getArtistArtFromLastFM = function() {
     var _this = this;
 
     //Request JSON from Last.fm
-    $.ajax({
+    return $.ajax({
         url: "http://ws.audioscrobbler.com/2.0/",
         dataType: "json",
+        timeout: 3000,
         data: {
             method: "artist.getInfo",
             api_key: "8a25e929a53ad33d8f5c1507ab70b84c",
             artist: _this.artist,
             format: "json"
         }
-    }).done(function (result) {
-
-        //If Last.fm brought us an album cover
-        if (result.artist) {
-            //Find the "large" image
-            var imageArray = result.artist.image;
-            var imageSrc = "";
-            for (var i in imageArray) {
-                if (imageArray[i].size == "large") {
-                    imageSrc = imageArray[i]["#text"];
-                }
-            }
-
-            if (imageSrc) {
-                console.log("LastFM provided art for artist " + _this.artistID + " " + result.artist.name);
-                
-                //Update our class variable
-                _this.imagesrc = imageSrc;
-            }
-        }
-
     });
 }
 
@@ -178,6 +138,7 @@ function LibraryManager() {
     var _this = this;
     
     this.promises = []; //Array for our promises
+    _this.artistPromises = [];
 
     this.tracks = [];
     this.albums = [];
@@ -190,11 +151,8 @@ function LibraryManager() {
      * @param {FileList}    files   FileList object from popup.htm
      */
     this.handleFileSelect = function (files) {
-
-        //Hide the select folder dialog
-        //**TODO** make this a bit prettier
-        $("#select-library-location-wrapper").hide(1000);
-
+        this.promises = []; //Reset promises stack.
+        
         // files is a FileList of File objects. Iterate through each file
         // For each file that is an mp3, load the id3 tags and add the track to tracks[]
         //
@@ -230,7 +188,7 @@ function LibraryManager() {
                             var album = tags.album || "Unknown";
                             var imagesrc = "image/default.png"; //Default image
                             
-                            //If there's a picture in the ID3 tags, base64 encode it and use that as the tracks imagesrc
+                            //If there's a picture in the ID3 tags, get it's base64 representation it and use that as the tracks imagesrc
                             if ("picture" in tags) {
                                 var image = tags.picture;
                                 var base64String = "";
@@ -238,6 +196,7 @@ function LibraryManager() {
                                     base64String += String.fromCharCode(image.data[j]);
                                 }
                                 imagesrc = "data:" + image.format + ";base64," + window.btoa(base64String);
+                                
                             } else {
                                 //Log to console for debugging
                                 console.log("No album art found for track: " + title + " by " + artist + " in ID3 tags. Trying LastFM.");
@@ -250,7 +209,27 @@ function LibraryManager() {
                             if (!("picture" in tags)) {
                                 //No image in ID3 tags, grab one from Deezer 
                                 //Grab album art from deezer
-                                newTrack.getAlbumArtFromLastFM();
+                                newTrack.getAlbumArtFromLastFM().then(function(result) {
+                                    //If Last.fm brought us an album cover
+                                    if (result.album) {
+                                        //Find the "large" image
+                                        var imageArray = result.album.image;
+                                        var imageSrc = "";
+                                        for (var i in imageArray) {
+                                            if (imageArray[i].size == "large") {
+                                                imageSrc = imageArray[i]["#text"];
+                                            }
+                                        }
+
+                                        if (imageSrc) {
+                                            console.log("LastFM provided art for track " + newTrack.trackID + " - " + result.album.name + " by " + result.album.artist);
+
+                                            //Update our class variable
+                                            newTrack.imagesrc = imageSrc;
+                                        } 
+                                    }
+                                });
+                                
                             }
 
                         } else {
@@ -272,22 +251,30 @@ function LibraryManager() {
 
 
         Promise.all(_this.promises).then(function() {
-            afterTracksDone();
+            populateOtherTabs();
+            
         });
 
-        function afterTracksDone() {
+        function populateOtherTabs() {
             //All tracks have been added
             
             //Populate artists and albums arrays
             _this.populateAlbums();
+//            
+            _this.artistPromises = [];
             _this.populateArtists();
-            
+            Promise.all(_this.artistPromises).then(function() {
+                refreshPopup();
+            });
+        }
+        
+        function refreshPopup() {
             //Trigger refresh on popup
             console.log("Refreshing popup view");
             if(chrome.extension.getViews()[1]) {
                 chrome.extension.getViews()[1].popupManager.hideFolderSelectMenus();
                 chrome.extension.getViews()[1].popupManager.displayTracks();
-            }
+            }   
         }
     };
 
@@ -298,21 +285,21 @@ function LibraryManager() {
      */
     this.populateAlbums = function () {
         for (var i in this.tracks) {
-            var track = this.tracks[i];
-            
+            var track = _this.tracks[i];
+
             var albumExists = false;
-            
-            for(var j in this.albums) {
-                if(this.albums[j].album == track.album && this.albums[j].artist == track.artist) {
+
+            for(var j in _this.albums) {
+                if(_this.albums[j].album == track.album && _this.albums[j].artist == track.artist) {
                     albumExists = true;   
                 }
             }
-            
+
             if (!albumExists) { //If artist is new, add it to our array
-                
+
                 console.log("Creating new album " + track.album + " by " + track.artist + " with image " + track.imagesrc);
-                var newAlbum = new Album(this.albums.length - 1, track.artist, track.album, track.imagesrc);
-                this.albums.push(newAlbum);
+                var newAlbum = new Album(_this.albums.length - 1, track.artist, track.album, track.imagesrc);
+                _this.albums.push(newAlbum);
             }
         }
     };
@@ -324,23 +311,49 @@ function LibraryManager() {
      */
     this.populateArtists = function () {
         for (var i in this.tracks) {
-            var track = this.tracks[i];
-            
-            var artistExists = false;
-            
-            for(var j in this.artists) {
-                if(this.artists[j].artist == track.artist) {
-                    artistExists = true;   
-                }
-            }
+            var promise = new Promise(function(resolve, reject) {
+                var track = _this.tracks[i];
 
-            if (!artistExists) { //If artist is new, add it to our list
-                this.artistNames.push(track.artist);
-                
-                var newArtist = new Artist(this.artists.length - 1, track.artist, track.imagesrc);
-                this.artists.push(newArtist);
-                newArtist.getArtistArtFromLastFM();
-            }
+                var artistExists = false;
+
+                for(var j in _this.artists) {
+                    if(_this.artists[j].artist == track.artist) {
+                        artistExists = true;   
+                    }
+                }
+
+                if (!artistExists) { //If artist is new, add it to our list
+                    _this.artistNames.push(track.artist);
+
+                    var newArtist = new Artist(_this.artists.length, track.artist, track.imagesrc);
+                    _this.artists.push(newArtist);
+                    newArtist.getArtistArtFromLastFM().then(function(result) {
+                        //If Last.fm brought us an album cover
+                        if (result.artist) {
+                            //Find the "large" image
+                            var imageArray = result.artist.image;
+                            var imageSrc = "";
+                            for (var i in imageArray) {
+                                if (imageArray[i].size == "large") {
+                                    imageSrc = imageArray[i]["#text"];
+                                }
+                            }
+
+                            if (imageSrc) {
+                                console.log("LastFM provided art for artist " + newArtist.artistID + " " + result.artist.name);
+
+                                //Update our class variable
+                                newArtist.imagesrc = imageSrc;
+                            }
+                        } 
+                        resolve();
+                    });
+                } else {
+                    resolve();   
+                }
+            });
+            
+            this.artistPromises.push(promise);
         }
     };
 

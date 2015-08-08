@@ -33,15 +33,6 @@ body {
     padding-bottom: 42px;
 }
 
-#noscript-warning {
-    width: 100%;
-    height: 100vh;
-}
-
-#noscript-warning h2 {
-    font-size: 1.4em;
-}
-
 #add-folder-wrapper {
     display: none;
 }
@@ -141,7 +132,39 @@ nav .brand-logo {
     font-weight: 700;
 }
 
-#audio-player {
+#now-playing {
+    height: 32px;
+    width: 190px;
+    position: fixed;
+    bottom: 0;
+    left:0;
+    overflow: hidden;
+}
+
+#now-playing span {
+    display: table-cell;
+    margin: 0;
+    position: relative;
+    animation-name: marquee;
+    animation-duration: 5s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: normal;
+    white-space:nowrap;
+    vertical-align: middle;
+    height: 32px;
+}
+
+@keyframes marquee {
+  from {
+    left: 100%;
+  }
+  to {
+    left: -200%;
+  }
+}
+
+#bottom-bar {
     position: fixed;
     bottom: 0;
     width: 100%;
@@ -152,14 +175,6 @@ nav .brand-logo {
 
 #playlist {
     display: none;
-}
-
-#html5-audio {
-    height: 30px;
-    width: 300px;
-    display: inline-block;
-    margin-top: 6px;
-    /* Change this to proper vertical center later */
 }
 
 #player-controls {

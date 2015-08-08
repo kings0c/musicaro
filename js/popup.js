@@ -503,6 +503,9 @@ function PopupManager() {
     this.setPlaying = function (trackid) {
 
         this.currentTrack = trackid;
+        var trackName = chrome.extension.getBackgroundPage().libManager.tracks[trackid].title;
+        var trackArtist = chrome.extension.getBackgroundPage().libManager.tracks[trackid].artist;
+        var trackAlbum = chrome.extension.getBackgroundPage().libManager.tracks[trackid].album;
 
         //Change the currently playing tracks play button in card to pause
         $("#tracks-container .music-item").each(function (e) {
@@ -513,6 +516,9 @@ function PopupManager() {
                 $currentTrackCard.find(".play-track i").text('play_arrow');
             }
         });
+        
+        //Update the now playing marquee
+        $("#now-playing span").html(trackName + " - " + trackArtist + " - " + trackAlbum);
 
         //Change player play/pause icon
         $("#player-controls .player-playpause i").text('pause');

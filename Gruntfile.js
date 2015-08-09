@@ -25,7 +25,7 @@ module.exports = function(grunt) {
           },
           target: {
             files: {
-              'css/style.min.css': ['css/style.css']
+              'css/style.min.css': ['css/materialize.min.css', 'css/style.css']
             }
           }
         },

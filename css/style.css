@@ -13,14 +13,18 @@ footer {
 nav {
   height: 64px !important;
   line-height: 64px !important; }
-
-nav .logo h1 {
-  font-size: 2.2rem;
-  line-height: 3px; }
-
-nav .logo {
-  margin-left: 20px;
-  outline: none !important; }
+  nav .logo {
+    margin-left: 20px;
+    outline: none !important; }
+    nav .logo h1 {
+      font-size: 2.2rem;
+      line-height: 3px; }
+  nav #search {
+    margin-bottom: 0;
+    height: 64px;
+    font-size: 0.8rem; }
+  nav .brand-logo {
+    margin-left: 20px; }
 
 body {
   /* For audio player */
@@ -59,54 +63,40 @@ nav,
 #select-library-location-wrapper,
 #add-folder-wrapper {
   color: white; }
-
-#select-library-location-wrapper h4,
-#add-folder-wrapper h4 {
-  font-size: 1.6rem; }
-
-nav #search {
-  margin-bottom: 0;
-  height: 64px;
-  font-size: 0.8rem; }
-
-nav .brand-logo {
-  margin-left: 20px; }
+  #select-library-location-wrapper h4,
+  #add-folder-wrapper h4 {
+    font-size: 1.6rem; }
 
 #top-controls {
   position: relative;
   overflow: hidden;
   padding: 20px 20px 0 20px; }
-
-#top-controls > .row {
-  margin-bottom: 0; }
+  #top-controls .row {
+    margin-bottom: 0; }
 
 .music-container {
   display: flex;
   padding: 20px 0;
   flex-wrap: wrap;
   justify-content: space-around; }
-
-.music-item {
-  display: inline-block;
-  -webkit-transition: -webkit-flex 250ms linear;
-  flex-basis: 174px; }
-
-.music-item .card-content {
-  padding-bottom: 85px; }
-
-.music-item .card-action {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 62px; }
-
-.card .card-action a:last-child {
-  margin-right: 0 !important; }
-
-.track-title,
-.track-artist {
-  display: block;
-  font-weight: 700; }
+  .music-container .music-item {
+    display: inline-block;
+    -webkit-transition: -webkit-flex 250ms linear;
+    flex-basis: 174px;
+    /* Queue track link */ }
+    .music-container .music-item .card-content {
+      padding-bottom: 85px; }
+    .music-container .music-item .card-action {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 62px; }
+    .music-container .music-item .card-action a:last-child {
+      margin-right: 0 !important; }
+    .music-container .music-item .track-title,
+    .music-container .music-item .track-artist {
+      display: block;
+      font-weight: 700; }
 
 #now-playing {
   height: 32px;
@@ -114,20 +104,20 @@ nav .brand-logo {
   position: fixed;
   bottom: 0;
   left: 0;
-  overflow: hidden; }
-
-#now-playing span {
-  display: table-cell;
-  margin: 0;
-  position: relative;
-  animation-name: marquee;
-  animation-duration: 5s;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  animation-direction: normal;
-  white-space: nowrap;
-  vertical-align: middle;
-  height: 32px; }
+  overflow: hidden;
+  color: #fffff0; }
+  #now-playing span {
+    display: table-cell;
+    margin: 0;
+    position: relative;
+    animation-name: marquee;
+    animation-duration: 5s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: normal;
+    white-space: nowrap;
+    vertical-align: middle;
+    height: 32px; }
 
 @keyframes marquee {
   from {
@@ -147,14 +137,12 @@ nav .brand-logo {
 
 #player-controls {
   display: inline-block; }
-
-#player-controls a {
-  color: white; }
-
-.range-field {
-  display: inline-block;
-  position: relative;
-  top: -12px; }
+  #player-controls a {
+    color: white; }
+  #player-controls .range-field {
+    display: inline-block;
+    position: relative;
+    top: -12px; }
 
 /* AJAX Loading Spinner */
 .ajax-spinner {

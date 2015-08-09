@@ -3,7 +3,7 @@
 
     "name": "Musicaro",
     "description": "Music player extension for Chrome.",
-    "version": "0.24",
+    "version": "0.25",
 
     "browser_action": {
         "default_icon": "favicon.ico",

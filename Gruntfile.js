@@ -32,7 +32,7 @@ module.exports = function(grunt) {
         uglify: {
             my_target: {
               files: {
-                'js/main.min.js': ['js/vendor/jquery-2.1.4.min.js', 'js/main.js'],
+                'js/main.min.js': ['js/vendor/jquery-2.1.4.min.js', 'js/vendor/id3-minimized.js', 'js/main.js'],
                 'js/popup.min.js': ['js/vendor/jquery-2.1.4.min.js', 'js/vendor/materialize.min.js', 'js/popup.js']
               }
             }

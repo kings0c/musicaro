@@ -174,7 +174,7 @@ $(document).ready(function () {
     //Check if a track is playing
     //If so set it to playing
     var currentTrackID = bgPage.playlistManager.getCurrentlyPlaying();
-    if(currentTrackID != null) {
+    if(currentTrackID !== null) {
         console.log("Currently playing track: " + currentTrackID);
         popupManager.setPlaying(currentTrackID);
     }
@@ -237,7 +237,7 @@ function PopupManager() {
             //Hide any .music-item where title album or artist does not match search string
             $(".music-item").each(function () {
                 var $currentItem = $(this);
-                if(searchString == "") {
+                if(searchString === "") {
                     $currentItem.css("display", "inline-block");
                 }
                 else {

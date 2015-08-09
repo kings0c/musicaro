@@ -91,7 +91,7 @@ function Artist(artistID, artist, imagesrc) {
     this.artist = artist;
     this.imagesrc = imagesrc;
     this.dom = {};
-};
+}
 
 /**
  * Make a JSON request to Last.FM API for the Artist
@@ -112,7 +112,7 @@ Artist.prototype.getArtistArtFromLastFM = function() {
             format: "json"
         }
     });
-}
+};
 
 /**
  * Album object
@@ -127,7 +127,7 @@ function Album(albumID, artist, album, imagesrc) {
     this.album = album;
     this.imagesrc = imagesrc;
     this.dom = {};
-};
+}
 
 /**
  * Library Manager Class
@@ -159,100 +159,99 @@ function LibraryManager() {
         // ID3.loadTags is called async
         // We need to update play / queue after tracks are added
         // So create a promise for each track and resolve it when the ID3 tags have been read
+        
+        /**
+         * pull ID3 tags from provided mp3 file
+         * and create a new Track in tracks[]
+         * Then try and grab album art from Last.FM if there's nothing in the ID3 tags
+         * @param {File}          f         from FileList provided by popup.htm
+         * @param {FileAPIReader} reader    File reader object
+         * @param {Blob}          objectURL Path to the file provided by File API blob://xxxx
+        *  @returns {Promise}       
+         */
+        function processFile(f, reader, objectURL) {
+            //Create a new promise
+            return new Promise(function(resolve, reject) {
+                ID3.loadTags(objectURL, function () {
+                    var tags = ID3.getAllTags(objectURL);
+                    if (tags) {
+                        var artist = tags.artist || "Unknown";
+                        var title = tags.title || "Unknown";
+                        var album = tags.album || "Unknown";
+                        var imagesrc = "image/default.png"; //Default image
 
+                        //If there's a picture in the ID3 tags, get it's base64 representation it and use that as the tracks imagesrc
+                        if ("picture" in tags) {
+                            var image = tags.picture;
+                            var base64String = "";
+                            for (var j = 0; j < image.data.length; j++) {
+                                base64String += String.fromCharCode(image.data[j]);
+                            }
+                            imagesrc = "data:" + image.format + ";base64," + window.btoa(base64String);
+
+                        } else {
+                            //Log to console for debugging
+                            console.log("No album art found for track: " + title + " by " + artist + " in ID3 tags. Trying LastFM.");
+                        }
+
+                        //Now create a new Track object and display it
+                        var newTrack = new Track(_this.tracks.length, title, artist, album, imagesrc, objectURL);
+                        _this.tracks.push(newTrack);
+
+                        if (!("picture" in tags)) {
+                            //No image in ID3 tags, grab one from Deezer 
+                            //Grab album art from deezer
+                            newTrack.getAlbumArtFromLastFM().then(function(result) {
+                                //If Last.fm brought us an album cover
+                                if (result.album) {
+                                    //Find the "large" image
+                                    var imageArray = result.album.image;
+                                    var imageSrc = "";
+                                    for (var i in imageArray) {
+                                        if (imageArray[i].size == "large") {
+                                            imageSrc = imageArray[i]["#text"];
+                                        }
+                                    }
+
+                                    if (imageSrc) {
+                                        console.log("LastFM provided art for track " + newTrack.trackID + " - " + result.album.name + " by " + result.album.artist);
+
+                                        //Update our class variable
+                                        newTrack.imagesrc = imageSrc;
+                                    } 
+                                }
+                            });
+
+                        }
+
+                    } else {
+                        console.log("No tags for current track");
+                    }
+
+                    resolve();
+                }, {
+                    tags: ["artist", "title", "album", "year", "comment", "track", "genre", "lyrics", "picture"],
+                    dataReader: reader
+                });
+            });
+        }
+        
         for (var i = 0; i < files.length; i++) {
-
             var f = files[i];
             if (f.type == "audio/mp3") { //TODO: more file support
                 var reader = new FileAPIReader(f);
                 var url = f.urn || f.name;
                 var objectURL = window.URL.createObjectURL(f);
-                getTagsFromFile(f, reader, objectURL);
-            }
-            
-            /**
-             * pull ID3 tags from provided mp3 file
-             * and create a new Track in tracks[]
-             * @param {File}          f         from FileList provided by popup.htm
-             * @param {FileAPIReader} reader    File reader object
-             * @param {Blob}          objectURL Path to the file provided by File API blob://xxxx
-             */
-            function getTagsFromFile(f, reader, objectURL) {
-                //Create a new promise
-                var promise = new Promise(function (resolve, reject) {
-                    ID3.loadTags(objectURL, function () {
-                        var tags = ID3.getAllTags(objectURL);
-                        if (tags) {
-                            var artist = tags.artist || "Unknown";
-                            var title = tags.title || "Unknown";
-                            var album = tags.album || "Unknown";
-                            var imagesrc = "image/default.png"; //Default image
-                            
-                            //If there's a picture in the ID3 tags, get it's base64 representation it and use that as the tracks imagesrc
-                            if ("picture" in tags) {
-                                var image = tags.picture;
-                                var base64String = "";
-                                for (var j = 0; j < image.data.length; j++) {
-                                    base64String += String.fromCharCode(image.data[j]);
-                                }
-                                imagesrc = "data:" + image.format + ";base64," + window.btoa(base64String);
-                                
-                            } else {
-                                //Log to console for debugging
-                                console.log("No album art found for track: " + title + " by " + artist + " in ID3 tags. Trying LastFM.");
-                            }
-
-                            //Now create a new Track object and display it
-                            var newTrack = new Track(_this.tracks.length, title, artist, album, imagesrc, objectURL);
-                            _this.tracks.push(newTrack);
-
-                            if (!("picture" in tags)) {
-                                //No image in ID3 tags, grab one from Deezer 
-                                //Grab album art from deezer
-                                newTrack.getAlbumArtFromLastFM().then(function(result) {
-                                    //If Last.fm brought us an album cover
-                                    if (result.album) {
-                                        //Find the "large" image
-                                        var imageArray = result.album.image;
-                                        var imageSrc = "";
-                                        for (var i in imageArray) {
-                                            if (imageArray[i].size == "large") {
-                                                imageSrc = imageArray[i]["#text"];
-                                            }
-                                        }
-
-                                        if (imageSrc) {
-                                            console.log("LastFM provided art for track " + newTrack.trackID + " - " + result.album.name + " by " + result.album.artist);
-
-                                            //Update our class variable
-                                            newTrack.imagesrc = imageSrc;
-                                        } 
-                                    }
-                                });
-                                
-                            }
-
-                        } else {
-                            console.log("No tags for current track");
-                        }
-
-                        resolve();
-                    }, {
-                        tags: ["artist", "title", "album", "year", "comment", "track", "genre", "lyrics", "picture"],
-                        dataReader: reader
-                    });
-                });
                 
                 //Add the promise to the promises stack
                 //So we know when all tracks are done
-                _this.promises.push(promise);
-            } //End getTagsFromFile
+                _this.promises.push(processFile(f, reader, objectURL));
+            }
         }//End for
 
 
         Promise.all(_this.promises).then(function() {
             populateOtherTabs();
-            
         });
 
         function populateOtherTabs() {
@@ -303,6 +302,50 @@ function LibraryManager() {
             }
         }
     };
+    
+    function createNewArtistFromTrack(i) {
+        return new Promise(function(resolve, reject) {
+            var track = _this.tracks[i];
+
+            var artistExists = false;
+
+            for(var j in _this.artists) {
+                if(_this.artists[j].artist == track.artist) {
+                    artistExists = true;   
+                }
+            }
+
+            if (!artistExists) { //If artist is new, add it to our list
+                _this.artistNames.push(track.artist);
+
+                var newArtist = new Artist(_this.artists.length, track.artist, track.imagesrc);
+                _this.artists.push(newArtist);
+                newArtist.getArtistArtFromLastFM().then(function(result) {
+                    //If Last.fm brought us an album cover
+                    if (result.artist) {
+                        //Find the "large" image
+                        var imageArray = result.artist.image;
+                        var imageSrc = "";
+                        for (var i in imageArray) {
+                            if (imageArray[i].size == "large") {
+                                imageSrc = imageArray[i]["#text"];
+                            }
+                        }
+
+                        if (imageSrc) {
+                            console.log("LastFM provided art for artist " + newArtist.artistID + " " + result.artist.name);
+
+                            //Update our class variable
+                            newArtist.imagesrc = imageSrc;
+                        }
+                    } 
+                    resolve();
+                });
+            } else {
+                resolve();   
+            }
+        });   
+    }
 
     /*
      *   Populate the artists tab
@@ -311,49 +354,7 @@ function LibraryManager() {
      */
     this.populateArtists = function () {
         for (var i in this.tracks) {
-            var promise = new Promise(function(resolve, reject) {
-                var track = _this.tracks[i];
-
-                var artistExists = false;
-
-                for(var j in _this.artists) {
-                    if(_this.artists[j].artist == track.artist) {
-                        artistExists = true;   
-                    }
-                }
-
-                if (!artistExists) { //If artist is new, add it to our list
-                    _this.artistNames.push(track.artist);
-
-                    var newArtist = new Artist(_this.artists.length, track.artist, track.imagesrc);
-                    _this.artists.push(newArtist);
-                    newArtist.getArtistArtFromLastFM().then(function(result) {
-                        //If Last.fm brought us an album cover
-                        if (result.artist) {
-                            //Find the "large" image
-                            var imageArray = result.artist.image;
-                            var imageSrc = "";
-                            for (var i in imageArray) {
-                                if (imageArray[i].size == "large") {
-                                    imageSrc = imageArray[i]["#text"];
-                                }
-                            }
-
-                            if (imageSrc) {
-                                console.log("LastFM provided art for artist " + newArtist.artistID + " " + result.artist.name);
-
-                                //Update our class variable
-                                newArtist.imagesrc = imageSrc;
-                            }
-                        } 
-                        resolve();
-                    });
-                } else {
-                    resolve();   
-                }
-            });
-            
-            this.artistPromises.push(promise);
+            this.artistPromises.push(createNewArtistFromTrack(i));
         }
     };
 
@@ -514,5 +515,5 @@ function PlaylistManager() {
     
     this.getCurrentlyPlaying = function() {
         return this.currentTrackID;
-    }  
+    };  
 }
